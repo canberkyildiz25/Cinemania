@@ -29,10 +29,11 @@ export function MovieCard({
   }
 
   return (
-    <motion.div
+    <motion.button
+      onClick={() => onPlay?.(movie)}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="group cursor-pointer relative rounded-lg overflow-hidden"
+      className="group cursor-pointer relative rounded-lg overflow-hidden w-full text-left bg-transparent border-0 p-0"
     >
       <div className="relative h-72 md:h-96 w-full bg-surface-secondary">
         {/* Image */}
@@ -113,6 +114,6 @@ export function MovieCard({
           </>
         )}
       </div>
-    </motion.div>
+    </motion.button>
   )
 }
