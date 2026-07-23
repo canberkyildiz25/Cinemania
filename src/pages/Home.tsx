@@ -117,44 +117,56 @@ export function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-brand-gold/20 py-12 mt-16">
+      <footer className="border-t border-brand-gold/30 py-16 mt-20 bg-gradient-to-b from-surface-primary to-surface-secondary/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+          {/* Footer Top */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
-              <h3 className="text-brand-gold font-bold mb-4">Company</h3>
-              <ul className="space-y-2 text-brand-cream/60 text-sm">
-                <li><a href="#" className="hover:text-brand-gold transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Jobs</a></li>
+              <h3 className="text-brand-gold font-display font-bold mb-6 text-lg">Company</h3>
+              <ul className="space-y-3 text-brand-cream/70 text-sm">
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">About</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Blog</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Jobs</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-brand-gold font-bold mb-4">Support</h3>
-              <ul className="space-y-2 text-brand-cream/60 text-sm">
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Status</a></li>
+              <h3 className="text-brand-gold font-display font-bold mb-6 text-lg">Support</h3>
+              <ul className="space-y-3 text-brand-cream/70 text-sm">
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Help Center</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Contact</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Status</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-brand-gold font-bold mb-4">Legal</h3>
-              <ul className="space-y-2 text-brand-cream/60 text-sm">
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Cookies</a></li>
+              <h3 className="text-brand-gold font-display font-bold mb-6 text-lg">Legal</h3>
+              <ul className="space-y-3 text-brand-cream/70 text-sm">
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Privacy</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Terms</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Cookies</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-brand-gold font-bold mb-4">Follow</h3>
-              <ul className="space-y-2 text-brand-cream/60 text-sm">
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Twitter</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Instagram</a></li>
-                <li><a href="#" className="hover:text-brand-gold transition-colors">Discord</a></li>
+              <h3 className="text-brand-gold font-display font-bold mb-6 text-lg">Follow</h3>
+              <ul className="space-y-3 text-brand-cream/70 text-sm">
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Twitter</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Instagram</a></li>
+                <li><a href="#" className="hover:text-brand-gold hover:translate-x-1 transition-all duration-200 inline-block">Discord</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-brand-gold/20 pt-8 text-center text-brand-cream/40 text-sm">
-            <p>&copy; 2025 FILMHUB. All rights reserved.</p>
+
+          {/* Divider */}
+          <div className="border-t border-brand-gold/20 my-8"></div>
+
+          {/* Footer Bottom */}
+          <div className="flex flex-col md:flex-row items-center justify-between text-center md:text-left">
+            <div>
+              <p className="text-brand-gold font-display font-bold text-sm mb-2">FILMHUB</p>
+              <p className="text-brand-cream/50 text-xs">Premium streaming platform for movie lovers</p>
+            </div>
+            <div className="text-brand-cream/40 text-xs mt-6 md:mt-0">
+              <p>&copy; 2026 FILMHUB. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>
