@@ -210,6 +210,41 @@ export const tmdbService = {
     }
   },
 
+  // Get Movie Videos (Trailers)
+  async getMovieVideos(movieId: number): Promise<Array<{
+    id: string
+    key: string
+    name: string
+    type: string
+    site: string
+  }>> {
+    try {
+      const response = await apiClient.get(`/movie/${movieId}/videos`)
+      return response.data.results || []
+    } catch (error) {
+      console.error('Error fetching videos:', error)
+      return []
+    }
+  },
+
+  // Get YouTube Trailer URL
+  getYouTubeTrailerUrl(videoKey: string): string {
+    return `https://www.youtube.com/embed/${videoKey}`
+  },
+
+  // Get Where to Watch Link
+  async getWatchProviderLink(movieId: number, region: string = 'US'): Promise<string | null> {
+    try {
+      const response = await apiClient.get(`/movie/${movieId}/watch/providers`, {
+        params: { region },
+      })
+      return response.data.results?.[region]?.link || null
+    } catch (error) {
+      console.error('Error fetching watch provider link:', error)
+      return null
+    }
+  },
+
   // Discover with Filters
   async discoverMovies(filters: {
     genres?: number[]

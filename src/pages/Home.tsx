@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMovieStore } from '../stores/movieStore'
 import { useUIStore } from '../stores/uiStore'
 import { useUserStore } from '../stores/userStore'
 import { tmdbService } from '../services/tmdbService'
 import { HeroCarousel } from '../components/features/hero/HeroCarousel'
 import { MovieCarousel } from '../components/features/movies/MovieCarousel'
-import { VideoPlayer } from '../components/features/player/VideoPlayer'
 import type { Movie } from '../types'
 
 export function Home() {
+  const navigate = useNavigate()
   const {
     trendingMovies,
     allMovies,
@@ -18,8 +19,7 @@ export function Home() {
     setError,
   } = useMovieStore() as any
 
-  const { isPlayerModalOpen, closePlayerModal, setCurrentPage } = useUIStore() as any
-  const { currentMovie: playerMovie, setCurrentMovie } = useUIStore() as any
+  const { setCurrentPage } = useUIStore() as any
   const { getContinueWatchingMovies } = useUserStore() as any
   const [continueWatchingMovies, setContinueWatchingMovies] = useState<Movie[]>([])
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([])
@@ -61,8 +61,7 @@ export function Home() {
   }, [trendingMovies])
 
   const handlePlayMovie = (movie: Movie) => {
-    setCurrentMovie(movie)
-    // In real app, would open player modal
+    navigate(`/watch/${movie.id}`)
   }
 
   return (
@@ -116,25 +115,6 @@ export function Home() {
           onPlayMovie={handlePlayMovie}
         />
       </div>
-
-      {/* Video Player Modal */}
-      {isPlayerModalOpen && playerMovie && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
-          <div className="w-full h-full max-h-screen">
-            <VideoPlayer
-              movie={playerMovie}
-              onClose={closePlayerModal}
-              onProgress={() => {
-                // Track watch progress
-              }}
-              onComplete={() => {
-                // Mark as watched
-                closePlayerModal()
-              }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <footer className="border-t border-brand-gold/20 py-12 mt-16">
