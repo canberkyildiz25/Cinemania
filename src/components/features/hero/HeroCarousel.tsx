@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Movie } from '../../../types'
-import { useUIStore } from '../../../stores/uiStore'
 
 interface HeroCarouselProps {
   movies: Movie[]
 }
 
 export function HeroCarousel({ movies }: HeroCarouselProps) {
+  const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
-  const { openPlayerModal } = useUIStore() as any
 
   const currentMovie = movies[currentIndex] || movies[0]
 
@@ -30,7 +30,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
   }
 
   const handlePlayClick = () => {
-    openPlayerModal()
+    navigate(`/watch/${currentMovie.id}`)
   }
 
   if (!currentMovie) {
