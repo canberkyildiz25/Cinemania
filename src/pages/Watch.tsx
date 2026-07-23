@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { tmdbService } from '../services/tmdbService'
 import { useUserStore } from '../stores/userStore'
-import { VideoPlayer } from '../components/features/player/VideoPlayer'
 import type { Movie } from '../types'
 
 export function Watch() {
@@ -12,6 +11,9 @@ export function Watch() {
   const [movie, setMovie] = useState<Movie | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [recommendations, setRecommendations] = useState<Movie[]>([])
+  const [trailerKey, setTrailerKey] = useState<string | null>(null)
+  const [watchLink, setWatchLink] = useState<string | null>(null)
+  const [showTrailer, setShowTrailer] = useState(false)
   const { addToWatchlist, isInWatchlist, rateMovie, getMovieRating } = useUserStore()
   const inWatchlist = movie ? isInWatchlist(movie.id) : false
   const rating = movie ? getMovieRating(movie.id) : undefined
@@ -21,12 +23,25 @@ export function Watch() {
       if (!id) return
       try {
         setIsLoading(true)
-        const [movieData, recsData] = await Promise.all([
-          tmdbService.getMovieDetails(parseInt(id)),
-          tmdbService.getRecommendations(parseInt(id)),
+        const movieId = parseInt(id)
+        const [movieData, recsData, videosData, watchLinkData] = await Promise.all([
+          tmdbService.getMovieDetails(movieId),
+          tmdbService.getRecommendations(movieId),
+          tmdbService.getMovieVideos(movieId),
+          tmdbService.getWatchProviderLink(movieId),
         ])
         setMovie(movieData)
         setRecommendations(recsData.results.slice(0, 6))
+
+        // Find first trailer
+        const trailer = videosData.find(
+          (v) => v.type === 'Trailer' && v.site === 'YouTube'
+        )
+        if (trailer) {
+          setTrailerKey(trailer.key)
+        }
+
+        setWatchLink(watchLinkData)
       } catch (err) {
         console.error('Failed to fetch movie:', err)
       } finally {
@@ -68,16 +83,51 @@ export function Watch() {
 
   return (
     <div className="min-h-screen bg-surface-primary">
-      {/* Video Player */}
-      <div className="w-full h-screen bg-black">
-        <VideoPlayer
-          movie={movie}
-          onClose={() => navigate('/')}
-          onComplete={() => {
-            // Mark as watched
-          }}
-        />
-      </div>
+      {/* Trailer or Video Player */}
+      {showTrailer && trailerKey ? (
+        <div className="w-full bg-black relative">
+          <button
+            onClick={() => setShowTrailer(false)}
+            className="absolute top-4 right-4 z-10 p-2 bg-brand-gold/20 hover:bg-brand-gold/40 rounded-full transition-colors"
+          >
+            <svg className="w-6 h-6 text-brand-gold" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+          <div className="aspect-video">
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${trailerKey}`}
+              title="Movie Trailer"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="w-full h-screen bg-black flex items-center justify-center">
+          <div className="text-center">
+            <svg className="w-20 h-20 text-brand-gold/40 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+              <polygon points="6,2 18,11 6,20" />
+            </svg>
+            <p className="text-brand-cream/60 mb-6">Full movie streaming coming soon</p>
+            {trailerKey && (
+              <button
+                onClick={() => setShowTrailer(true)}
+                className="btn-primary"
+              >
+                ▶ Watch Trailer
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Movie Details Below Player */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -163,6 +213,35 @@ export function Watch() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
+              {/* Watch Trailer Button */}
+              {trailerKey && (
+                <button
+                  onClick={() => setShowTrailer(true)}
+                  className="w-full py-3 px-4 bg-brand-burgundy text-brand-cream rounded font-semibold hover:bg-brand-burgundy/80 transition-all flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <polygon points="6,2 18,11 6,20" />
+                  </svg>
+                  Watch Trailer
+                </button>
+              )}
+
+              {/* Where to Watch Button */}
+              {watchLink && (
+                <a
+                  href={watchLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all flex items-center justify-center gap-2 block text-center"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.343a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM16.364 15.364a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM11 15a1 1 0 10-2 0v1a1 1 0 102 0v-1zM4.343 15.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM2 10a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.343 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707z" />
+                  </svg>
+                  Where to Watch
+                </a>
+              )}
+
+              {/* Add to Watchlist Button */}
               <button
                 onClick={() => addToWatchlist(movie.id)}
                 className={`w-full py-3 px-4 rounded font-semibold transition-all ${
