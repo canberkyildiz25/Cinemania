@@ -1,10 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { useUIStore } from '../../stores/uiStore'
 import { useUserStore } from '../../stores/userStore'
 
 export function Header() {
   const navigate = useNavigate()
-  const { openSearchModal } = useUIStore()
   const { isAuthenticated, currentUser } = useUserStore()
 
   return (
@@ -33,8 +31,8 @@ export function Header() {
         <div className="flex items-center gap-4">
           {/* Search */}
           <button
-            onClick={() => openSearchModal()}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded border border-brand-gold/30 text-brand-cream hover:border-brand-gold transition-colors group"
+            onClick={() => navigate('/search')}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded border border-brand-gold/30 text-brand-cream hover:border-brand-gold hover:bg-brand-gold/10 transition-all group"
           >
             <svg
               className="w-4 h-4 group-hover:text-brand-gold transition-colors"
