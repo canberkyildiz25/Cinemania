@@ -4,6 +4,10 @@ import { useMovieStore } from './stores/movieStore'
 import { tmdbService } from './services/tmdbService'
 import { Header } from './components/layout/Header'
 import { Home } from './pages/Home'
+import { Watch } from './pages/Watch'
+import { Search } from './pages/Search'
+import { Library } from './pages/Library'
+import { Profile } from './pages/Profile'
 import './styles/globals.css'
 
 function App() {
@@ -36,7 +40,10 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* Additional routes will be added later */}
+          <Route path="/watch/:id" element={<Watch />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </Router>

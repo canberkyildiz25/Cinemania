@@ -24,8 +24,8 @@ export function Header() {
           {/* Navigation */}
           <nav className="hidden md:flex gap-6">
             <NavLink label="Home" onClick={() => navigate('/')} />
-            <NavLink label="Trending" onClick={() => navigate('/?sort=trending')} />
-            <NavLink label="Search" onClick={() => openSearchModal()} />
+            <NavLink label="Search" onClick={() => navigate('/search')} />
+            <NavLink label="Library" onClick={() => navigate('/library')} />
           </nav>
         </div>
 
