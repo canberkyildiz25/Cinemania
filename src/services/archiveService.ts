@@ -46,7 +46,7 @@ export const archiveService = {
           voteAverage: Math.random() * 10,
           voteCount: Math.floor(Math.random() * 1000),
           runtime: 120,
-          streamUrl: `https://archive.org/download/${doc.identifier}/${this.getVideoFile(doc.identifier)}`,
+          streamUrl: this.getStreamUrl(doc.identifier),
           archiveId: doc.identifier,
         }))
     } catch (error) {
@@ -87,13 +87,9 @@ export const archiveService = {
     }
   },
 
-  getVideoFile(identifier: string): string {
-    // Archive.org'da MP4 dosyasının adı genelde identifier_512kb.mp4 veya identifier.mp4
-    return `${identifier}_512kb.mp4`
-  },
-
   getStreamUrl(identifier: string): string {
-    return `https://archive.org/download/${identifier}/${this.getVideoFile(identifier)}`
+    // Archive.org direct download URL for MP4
+    return `https://archive.org/download/${identifier}/${identifier}.mp4`
   },
 
   getThumbnailUrl(identifier: string): string {
