@@ -28,14 +28,18 @@ export const archiveService = {
         output: 'json',
         rows: 20,
         page: page,
-        fl: 'identifier,title,description,year,creator',
+        fl: 'identifier,title,description,year,creator,format',
       }
 
       const response = await axios.get<ArchiveResponse>(ARCHIVE_BASE_URL, { params })
       const docs = response.data.response.docs
+      console.log(`Archive.org search (${query}):`, docs.length, 'films found')
+      if (docs.length > 0) {
+        console.log('First doc format:', docs[0].format)
+      }
 
       return docs
-        .filter(doc => doc.format?.some(f => ['MP4', 'WebM', 'Ogg Video'].includes(f)))
+        .filter(doc => doc.format?.some(f => f.includes('MP4') || f.includes('MPEG4') || f.includes('WebM') || f.includes('Ogg Video')))
         .map((doc, index) => ({
           id: parseInt(`${page}${index}`, 10),
           title: doc.title || 'Untitled',
@@ -51,6 +55,7 @@ export const archiveService = {
         }))
     } catch (error) {
       console.error('Archive.org search error:', error)
+      if (error instanceof Error) console.error('Message:', error.message)
       return []
     }
   },
