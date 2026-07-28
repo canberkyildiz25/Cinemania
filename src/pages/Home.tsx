@@ -32,6 +32,7 @@ export function Home() {
           archiveService.searchFreeMovies('classic'),
         ])
 
+        console.log('State update - Free movies:', archiveMovies.length, 'Classic films:', classicMovies.length)
         setFreeMovies(archiveMovies)
         setClassicFilms(classicMovies)
       } catch (err) {
