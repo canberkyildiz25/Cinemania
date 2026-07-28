@@ -24,7 +24,7 @@ export const archiveService = {
   async searchFreeMovies(query: string, page = 1): Promise<Movie[]> {
     try {
       const params = {
-        q: `(${query}) AND (mediatype:movies OR mediatype:collection) AND format:(MP4 OR WebM OR Ogg Video)`,
+        q: `(${query}) AND mediatype:movies AND collection:movies AND format:(MP4 OR WebM OR Ogg Video)`,
         output: 'json',
         rows: 20,
         page: page,
