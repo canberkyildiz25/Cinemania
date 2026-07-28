@@ -4,6 +4,7 @@ import { useMovieStore } from '../stores/movieStore'
 import { useUIStore } from '../stores/uiStore'
 import { useUserStore } from '../stores/userStore'
 import { tmdbService } from '../services/tmdbService'
+import { archiveService } from '../services/archiveService'
 import { HeroCarousel } from '../components/features/hero/HeroCarousel'
 import { MovieCarousel } from '../components/features/movies/MovieCarousel'
 import type { Movie } from '../types'
@@ -23,6 +24,8 @@ export function Home() {
   const { getContinueWatchingMovies } = useUserStore() as any
   const [continueWatchingMovies, setContinueWatchingMovies] = useState<Movie[]>([])
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([])
+  const [freeMovies, setFreeMovies] = useState<Movie[]>([])
+  const [classicFilms, setClassicFilms] = useState<Movie[]>([])
 
   useEffect(() => {
     setCurrentPage('home')
@@ -33,20 +36,23 @@ export function Home() {
       try {
         setIsLoading(true)
 
-        const [topRated, recommended] = await Promise.all([
+        const [topRated, recommended, archiveMovies, classicMovies] = await Promise.all([
           tmdbService.getTopRatedMovies(),
           trendingMovies.length > 0
             ? tmdbService.getRecommendations(trendingMovies[0].id)
             : Promise.resolve({ results: [] }),
+          archiveService.searchFreeMovies('film'),
+          archiveService.searchFreeMovies('classic'),
         ])
 
         setTopRatedMovies(topRated.results)
         setRecommendedMovies(recommended.results)
+        setFreeMovies(archiveMovies)
+        setClassicFilms(classicMovies)
 
         // Get continue watching from user store
         const sessions = getContinueWatchingMovies() || []
         if (sessions.length > 0) {
-          // In a real app, fetch movie details for these sessions
           setContinueWatchingMovies(sessions.slice(0, 5))
         }
       } catch (err) {
@@ -114,6 +120,26 @@ export function Home() {
           movies={allMovies.slice(0, 10)}
           onPlayMovie={handlePlayMovie}
         />
+
+        {/* Free Movies */}
+        {freeMovies.length > 0 && (
+          <MovieCarousel
+            title="Watch Free"
+            subtitle="Completely free movies - no subscription needed"
+            movies={freeMovies.slice(0, 10)}
+            onPlayMovie={handlePlayMovie}
+          />
+        )}
+
+        {/* Classic Films */}
+        {classicFilms.length > 0 && (
+          <MovieCarousel
+            title="Classic Cinema"
+            subtitle="Timeless masterpieces from cinema history"
+            movies={classicFilms.slice(0, 10)}
+            onPlayMovie={handlePlayMovie}
+          />
+        )}
       </div>
 
       {/* Footer */}

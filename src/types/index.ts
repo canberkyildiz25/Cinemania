@@ -8,8 +8,8 @@ export interface Movie {
   releaseDate: string
   voteAverage: number
   voteCount: number
-  genreIds: number[]
-  popularity: number
+  genreIds?: number[]
+  popularity?: number
   runtime?: number
   budget?: number
   revenue?: number
@@ -20,6 +20,8 @@ export interface Movie {
     cast: Cast[]
     crew: Crew[]
   }
+  streamUrl?: string
+  archiveId?: string
 }
 
 export interface Cast {
