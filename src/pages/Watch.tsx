@@ -11,8 +11,10 @@ export function Watch() {
   const [movie, setMovie] = useState<Movie | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [recommendations, setRecommendations] = useState<Movie[]>([])
+  const [trailerKey, setTrailerKey] = useState<string | null>(null)
   const [watchLink, setWatchLink] = useState<string | null>(null)
   const [providers, setProviders] = useState<any>(null)
+  const [showTrailer, setShowTrailer] = useState(false)
   const { addToWatchlist, isInWatchlist, rateMovie, getMovieRating } = useUserStore()
   const inWatchlist = movie ? isInWatchlist(movie.id) : false
   const rating = movie ? getMovieRating(movie.id) : undefined
@@ -23,14 +25,23 @@ export function Watch() {
       try {
         setIsLoading(true)
         const movieId = parseInt(id)
-        const [movieData, recsData, watchLinkData, providersData] = await Promise.all([
+        const [movieData, recsData, videosData, watchLinkData, providersData] = await Promise.all([
           tmdbService.getMovieDetails(movieId),
           tmdbService.getRecommendations(movieId),
+          tmdbService.getMovieVideos(movieId),
           tmdbService.getWatchProviderLink(movieId),
           tmdbService.getWatchProviders(movieId),
         ])
         setMovie(movieData)
         setRecommendations(recsData.results.slice(0, 6))
+
+        const trailer = videosData.find(
+          (v) => v.type === 'Trailer' && v.site === 'YouTube'
+        )
+        if (trailer) {
+          setTrailerKey(trailer.key)
+        }
+
         setWatchLink(watchLinkData)
         setProviders(providersData)
       } catch (err) {
@@ -76,9 +87,9 @@ export function Watch() {
     <div className="min-h-screen bg-surface-primary">
       {/* Movie Details */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Main Info */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-3">
             <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-cream mb-4">
               {movie.title}
             </h1>
@@ -133,6 +144,15 @@ export function Watch() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {movie.credits.cast.slice(0, 8).map((actor: any) => (
                     <div key={actor.id} className="text-sm">
+                      {actor.profile_path && (
+                        <div className="mb-2 rounded-lg overflow-hidden h-40">
+                          <img
+                            src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
+                            alt={actor.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <p className="text-brand-cream font-semibold">{actor.name}</p>
                       <p className="text-brand-cream/60 text-xs">{actor.character}</p>
                     </div>
@@ -153,6 +173,15 @@ export function Watch() {
                     .slice(0, 6)
                     .map((person: any) => (
                       <div key={person.id} className="text-sm">
+                        {person.profile_path && (
+                          <div className="mb-2 rounded-lg overflow-hidden h-40">
+                            <img
+                              src={`https://image.tmdb.org/t/p/w200${person.profile_path}`}
+                              alt={person.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                         <p className="text-brand-cream font-semibold">{person.name}</p>
                         <p className="text-brand-cream/60 text-xs">{person.job}</p>
                       </div>
@@ -170,6 +199,15 @@ export function Watch() {
                 <div className="flex flex-wrap gap-4">
                   {movie.productionCompanies.slice(0, 3).map((company) => (
                     <div key={company.id} className="text-sm text-brand-cream/70">
+                      {company.logo_path && (
+                        <div className="mb-2 h-16">
+                          <img
+                            src={`https://image.tmdb.org/t/p/h100${company.logo_path}`}
+                            alt={company.name}
+                            className="h-full object-contain"
+                          />
+                        </div>
+                      )}
                       {company.name}
                     </div>
                   ))}
@@ -195,6 +233,46 @@ export function Watch() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
+              {/* Watch Trailer Button */}
+              {trailerKey && (
+                <>
+                  {showTrailer && (
+                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                      <div className="w-full max-w-4xl">
+                        <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+                          <button
+                            onClick={() => setShowTrailer(false)}
+                            className="absolute top-4 right-4 z-10 p-2 bg-brand-gold/20 hover:bg-brand-gold/40 rounded-full transition-colors"
+                          >
+                            <svg className="w-6 h-6 text-brand-gold" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={`https://www.youtube.com/embed/${trailerKey}`}
+                            title="Movie Trailer"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowTrailer(true)}
+                    className="w-full py-3 px-4 bg-brand-burgundy text-brand-cream rounded font-semibold hover:bg-brand-burgundy/80 transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                      <polygon points="6,2 18,11 6,20" />
+                    </svg>
+                    Watch Trailer
+                  </button>
+                </>
+              )}
+
               {/* Where to Watch Button */}
               {/* Platforms Section */}
               {providers && providers.flatrate && providers.flatrate.length > 0 ? (
@@ -204,16 +282,16 @@ export function Watch() {
                     {providers.flatrate.map((p: any) => (
                       watchLink && (
                         <a
-                          key={p.provider_id}
+                          key={p.providerId}
                           href={watchLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="py-2 px-3 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all text-sm flex items-center gap-2"
                         >
-                          {p.logo_path && (
-                            <img src={`https://image.tmdb.org/t/p/original${p.logo_path}`} alt={p.provider_name} className="w-6 h-6 rounded" />
+                          {p.logo && (
+                            <img src={p.logo} alt={p.providerName} className="w-6 h-6 rounded" />
                           )}
-                          Watch on {p.provider_name}
+                          {p.providerName}
                         </a>
                       )
                     ))}
