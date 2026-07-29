@@ -308,20 +308,29 @@ export function Watch() {
                   <p className="text-sm font-semibold text-brand-cream mb-3">📺 Available on</p>
                   <div className="flex flex-wrap gap-2">
                     {providers.flatrate.map((p: any) => {
-                      const getProviderLink = (providerName: string, movieTitle: string | null): string => {
+                      const providerNames: Record<number, string> = {
+                        8: 'Netflix',
+                        1: 'Prime Video',
+                        337: 'Disney+',
+                        120: 'HBO Max',
+                        521: 'Turkcell TV +',
+                      }
+
+                      const displayName = providerNames[p.providerId] || p.providerName
+
+                      const getProviderLink = (providerId: number, providerName: string, movieTitle: string | null): string => {
                         if (!movieTitle) return watchLink || '#'
                         const titleParam = encodeURIComponent(movieTitle)
-                        const providerLower = providerName.toLowerCase()
 
-                        if (providerLower.includes('netflix')) {
+                        if (providerId === 8 || providerName.toLowerCase().includes('netflix')) {
                           return `https://www.netflix.com/tr/search?q=${titleParam}`
-                        } else if (providerLower.includes('prime') || providerLower.includes('amazon')) {
+                        } else if (providerId === 1 || providerName.toLowerCase().includes('prime')) {
                           return `https://www.primevideo.com/search?keyword=${titleParam}`
-                        } else if (providerLower.includes('disney')) {
+                        } else if (providerId === 337 || providerName.toLowerCase().includes('disney')) {
                           return `https://www.disneyplus.com/search?q=${titleParam}`
-                        } else if (providerLower.includes('hbo')) {
+                        } else if (providerId === 120 || providerName.toLowerCase().includes('hbo')) {
                           return `https://www.hbomaxtr.com/search?q=${titleParam}`
-                        } else if (providerLower.includes('turkcell')) {
+                        } else if (providerId === 521 || providerName.toLowerCase().includes('turkcell')) {
                           return `https://www.tv.turkcell.com.tr/search?q=${titleParam}`
                         }
                         return watchLink || '#'
@@ -330,15 +339,15 @@ export function Watch() {
                       return (
                         <a
                           key={p.providerId}
-                          href={getProviderLink(p.providerName, movie?.title || '')}
+                          href={getProviderLink(p.providerId, displayName, movie?.title || '')}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="py-2 px-3 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all text-sm flex items-center gap-2"
+                          className="py-2 px-3 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all text-sm flex items-center gap-2 cursor-pointer"
                         >
                           {p.logo && (
-                            <img src={p.logo} alt={p.providerName} className="w-6 h-6 rounded" />
+                            <img src={p.logo} alt={displayName} className="w-6 h-6 rounded" />
                           )}
-                          {p.providerName}
+                          {displayName}
                         </a>
                       )
                     })}
