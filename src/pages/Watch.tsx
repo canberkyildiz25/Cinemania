@@ -14,6 +14,7 @@ export function Watch() {
   const [trailerKey, setTrailerKey] = useState<string | null>(null)
   const [watchLink, setWatchLink] = useState<string | null>(null)
   const [showTrailer, setShowTrailer] = useState(false)
+  const [providers, setProviders] = useState<any>(null)
   const { addToWatchlist, isInWatchlist, rateMovie, getMovieRating } = useUserStore()
   const inWatchlist = movie ? isInWatchlist(movie.id) : false
   const rating = movie ? getMovieRating(movie.id) : undefined
@@ -24,11 +25,12 @@ export function Watch() {
       try {
         setIsLoading(true)
         const movieId = parseInt(id)
-        const [movieData, recsData, videosData, watchLinkData] = await Promise.all([
+        const [movieData, recsData, videosData, watchLinkData, providersData] = await Promise.all([
           tmdbService.getMovieDetails(movieId),
           tmdbService.getRecommendations(movieId),
           tmdbService.getMovieVideos(movieId),
           tmdbService.getWatchProviderLink(movieId),
+          tmdbService.getWatchProviders(movieId),
         ])
         setMovie(movieData)
         setRecommendations(recsData.results.slice(0, 6))
@@ -42,6 +44,7 @@ export function Watch() {
         }
 
         setWatchLink(watchLinkData)
+        setProviders(providersData)
       } catch (err) {
         console.error('Failed to fetch movie:', err)
       } finally {
@@ -227,19 +230,49 @@ export function Watch() {
               )}
 
               {/* Where to Watch Button */}
-              {watchLink && (
+              {/* Platforms Section */}
+              {providers && (providers.flatrate || providers.rent || providers.buy) ? (
+                <div>
+                  <p className="text-sm font-semibold text-brand-cream mb-3">
+                    {providers.flatrate ? '📺 Available on Streaming' : '💰 Where to Watch'}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {providers.flatrate?.map((p: any) => (
+                      <div key={p.provider_id} className="flex items-center gap-2 bg-brand-gold/20 rounded px-3 py-2">
+                        {p.logo_path && (
+                          <img src={`https://image.tmdb.org/t/p/original${p.logo_path}`} alt={p.provider_name} className="w-8 h-8 rounded" />
+                        )}
+                        <span className="text-sm text-brand-cream">{p.provider_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {watchLink && (
+                    <a
+                      href={watchLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.343a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM16.364 15.364a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM11 15a1 1 0 10-2 0v1a1 1 0 102 0v-1zM4.343 15.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM2 10a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.343 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707z" />
+                      </svg>
+                      View More Platforms
+                    </a>
+                  )}
+                </div>
+              ) : watchLink ? (
                 <a
                   href={watchLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all flex items-center justify-center gap-2 block text-center"
+                  className="w-full py-3 px-4 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.343a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM16.364 15.364a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM11 15a1 1 0 10-2 0v1a1 1 0 102 0v-1zM4.343 15.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM2 10a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.343 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707z" />
                   </svg>
                   Where to Watch
                 </a>
-              )}
+              ) : null}
 
               {/* Add to Watchlist Button */}
               <button
