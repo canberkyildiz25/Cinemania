@@ -1,18 +1,45 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { tmdbService } from '../../../services/tmdbService'
 import type { Movie } from '../../../types'
 
 interface HeroCarouselProps {
   movies: Movie[]
 }
 
+interface TrailerKey {
+  [key: number]: string
+}
+
 export function HeroCarousel({ movies }: HeroCarouselProps) {
-  const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
+  const [trailerKeys, setTrailerKeys] = useState<TrailerKey>({})
 
   const currentMovie = movies[currentIndex] || movies[0]
+
+  // Fetch trailers for all movies
+  useEffect(() => {
+    const fetchTrailers = async () => {
+      const keys: TrailerKey = {}
+      for (const movie of movies) {
+        try {
+          const videos = await tmdbService.getMovieVideos(movie.id)
+          const trailer = videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube')
+          if (trailer) {
+            keys[movie.id] = trailer.key
+          }
+        } catch (err) {
+          console.error(`Failed to fetch trailer for ${movie.id}`)
+        }
+      }
+      setTrailerKeys(keys)
+    }
+
+    if (movies.length > 0) {
+      fetchTrailers()
+    }
+  }, [movies])
 
   useEffect(() => {
     if (!autoPlay || movies.length === 0) return
@@ -29,8 +56,12 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
     setAutoPlay(false)
   }
 
-  const handlePlayClick = () => {
-    navigate(`/watch/${currentMovie.id}`)
+  const [showTrailer, setShowTrailer] = useState(false)
+
+  const handleTrailerClick = () => {
+    if (trailerKeys[currentMovie.id]) {
+      setShowTrailer(true)
+    }
   }
 
   if (!currentMovie) {
@@ -40,7 +71,35 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
   }
 
   return (
-    <div className="relative w-full h-screen md:h-[600px] overflow-hidden bg-surface-primary">
+    <>
+      {/* Trailer Modal */}
+      {showTrailer && trailerKeys[currentMovie.id] && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+              <button
+                onClick={() => setShowTrailer(false)}
+                className="absolute top-4 right-4 z-10 p-2 bg-brand-gold/20 hover:bg-brand-gold/40 rounded-full transition-colors"
+              >
+                <svg className="w-6 h-6 text-brand-gold" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${trailerKeys[currentMovie.id]}`}
+                title="Movie Trailer"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="relative w-full h-screen md:h-[600px] overflow-hidden bg-surface-primary">
       {/* Slides */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -131,8 +190,9 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                 className="flex flex-wrap gap-4"
               >
                 <button
-                  onClick={handlePlayClick}
+                  onClick={handleTrailerClick}
                   className="btn-primary flex items-center gap-2"
+                  disabled={!trailerKeys[currentMovie.id]}
                 >
                   <svg
                     className="w-5 h-5 fill-current"
@@ -140,7 +200,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                   >
                     <polygon points="6,2 18,11 6,20" />
                   </svg>
-                  Watch Now
+                  Watch Trailer
                 </button>
 
                 <button className="btn-secondary flex items-center gap-2">
@@ -200,6 +260,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
-    </div>
+      </div>
+    </>
   )
 }
