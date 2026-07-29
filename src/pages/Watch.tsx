@@ -11,9 +11,7 @@ export function Watch() {
   const [movie, setMovie] = useState<Movie | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [recommendations, setRecommendations] = useState<Movie[]>([])
-  const [trailerKey, setTrailerKey] = useState<string | null>(null)
   const [watchLink, setWatchLink] = useState<string | null>(null)
-  const [showTrailer, setShowTrailer] = useState(false)
   const [providers, setProviders] = useState<any>(null)
   const { addToWatchlist, isInWatchlist, rateMovie, getMovieRating } = useUserStore()
   const inWatchlist = movie ? isInWatchlist(movie.id) : false
@@ -25,24 +23,14 @@ export function Watch() {
       try {
         setIsLoading(true)
         const movieId = parseInt(id)
-        const [movieData, recsData, videosData, watchLinkData, providersData] = await Promise.all([
+        const [movieData, recsData, watchLinkData, providersData] = await Promise.all([
           tmdbService.getMovieDetails(movieId),
           tmdbService.getRecommendations(movieId),
-          tmdbService.getMovieVideos(movieId),
           tmdbService.getWatchProviderLink(movieId),
           tmdbService.getWatchProviders(movieId),
         ])
         setMovie(movieData)
         setRecommendations(recsData.results.slice(0, 6))
-
-        // Find first trailer
-        const trailer = videosData.find(
-          (v) => v.type === 'Trailer' && v.site === 'YouTube'
-        )
-        if (trailer) {
-          setTrailerKey(trailer.key)
-        }
-
         setWatchLink(watchLinkData)
         setProviders(providersData)
       } catch (err) {
@@ -86,55 +74,7 @@ export function Watch() {
 
   return (
     <div className="min-h-screen bg-surface-primary">
-      {/* Trailer or Video Player */}
-      {showTrailer && trailerKey ? (
-        <div className="w-full bg-black relative">
-          <button
-            onClick={() => setShowTrailer(false)}
-            className="absolute top-4 right-4 z-10 p-2 bg-brand-gold/20 hover:bg-brand-gold/40 rounded-full transition-colors"
-          >
-            <svg className="w-6 h-6 text-brand-gold" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-          <div className="aspect-video">
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${trailerKey}`}
-              title="Movie Trailer"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="w-full h-screen bg-black flex items-center justify-center">
-          <div className="text-center">
-            {trailerKey && (
-              <button
-                onClick={() => setShowTrailer(true)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5 fill-current"
-                  viewBox="0 0 20 20"
-                >
-                  <polygon points="6,2 18,11 6,20" />
-                </svg>
-                Watch Trailer
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Movie Details Below Player */}
+      {/* Movie Details */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Main Info */}
@@ -255,19 +195,6 @@ export function Watch() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              {/* Watch Trailer Button */}
-              {trailerKey && (
-                <button
-                  onClick={() => setShowTrailer(true)}
-                  className="w-full py-3 px-4 bg-brand-burgundy text-brand-cream rounded font-semibold hover:bg-brand-burgundy/80 transition-all flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                    <polygon points="6,2 18,11 6,20" />
-                  </svg>
-                  Watch Trailer
-                </button>
-              )}
-
               {/* Where to Watch Button */}
               {/* Platforms Section */}
               {providers && providers.flatrate && providers.flatrate.length > 0 ? (
