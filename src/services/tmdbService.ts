@@ -159,16 +159,16 @@ export const tmdbService = {
         `/movie/${movieId}/watch/providers`,
         {
           params: {
-            region: 'US',
+            region: 'TR',
           },
         }
       )
 
-      if (response.data.results?.US) {
-        const usProviders = response.data.results.US
+      if (response.data.results?.TR) {
+        const trProviders = response.data.results.TR
         return {
-          link: usProviders.link,
-          flatrate: usProviders.flatrate?.map(
+          link: trProviders.link,
+          flatrate: trProviders.flatrate?.map(
             (p: any) => ({
               providerId: p.provider_id,
               providerName: p.provider_name,
@@ -176,7 +176,7 @@ export const tmdbService = {
               displayPriority: p.display_priority,
             })
           ) || [],
-          buy: usProviders.buy?.map(
+          buy: trProviders.buy?.map(
             (p: any) => ({
               providerId: p.provider_id,
               providerName: p.provider_name,
@@ -184,7 +184,7 @@ export const tmdbService = {
               displayPriority: p.display_priority,
             })
           ) || [],
-          rent: usProviders.rent?.map(
+          rent: trProviders.rent?.map(
             (p: any) => ({
               providerId: p.provider_id,
               providerName: p.provider_name,
