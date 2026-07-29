@@ -17,6 +17,7 @@ export function Watch() {
   const [watchLink, setWatchLink] = useState<string | null>(null)
   const [providers, setProviders] = useState<any>(null)
   const [showTrailer, setShowTrailer] = useState(false)
+  const [selectedCastMember, setSelectedCastMember] = useState<any>(null)
   const { addToWatchlist, isInWatchlist, rateMovie, getMovieRating } = useUserStore()
   const inWatchlist = movie ? isInWatchlist(movie.id) : false
   const rating = movie ? getMovieRating(movie.id) : undefined
@@ -145,6 +146,39 @@ export function Watch() {
               </div>
             )}
 
+            {/* Cast Modal */}
+            {selectedCastMember && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                <div className="bg-surface-secondary rounded-lg max-w-sm w-full p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-2xl font-display font-bold text-brand-cream">
+                      {selectedCastMember.name}
+                    </h2>
+                    <button
+                      onClick={() => setSelectedCastMember(null)}
+                      className="text-brand-gold hover:text-brand-gold/80 cursor-pointer"
+                    >
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                  {selectedCastMember.profile_path && (
+                    <div className="mb-4 rounded-lg overflow-hidden">
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${selectedCastMember.profile_path}`}
+                        alt={selectedCastMember.name}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  )}
+                  <p className="text-brand-cream/70 mb-2">
+                    <span className="font-semibold text-brand-cream">Character:</span> {selectedCastMember.character}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Cast */}
             {movie.credits?.cast && movie.credits.cast.length > 0 && (
               <div className="mb-8">
@@ -153,19 +187,14 @@ export function Watch() {
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {movie.credits.cast.slice(0, 8).map((actor: any) => (
-                    <div key={actor.id} className="text-sm">
-                      {actor.profile_path && (
-                        <div className="mb-2 rounded-lg overflow-hidden h-40">
-                          <img
-                            src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
-                            alt={actor.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <p className="text-brand-cream font-semibold">{actor.name}</p>
+                    <button
+                      key={actor.id}
+                      onClick={() => setSelectedCastMember(actor)}
+                      className="text-left p-3 bg-surface-secondary rounded-lg hover:bg-surface-secondary/80 transition-colors cursor-pointer"
+                    >
+                      <p className="text-brand-cream font-semibold text-sm">{actor.name}</p>
                       <p className="text-brand-cream/60 text-xs">{actor.character}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -182,19 +211,14 @@ export function Watch() {
                     .filter((person: any) => ['Director', 'Producer', 'Screenplay', 'Cinematography'].includes(person.job))
                     .slice(0, 6)
                     .map((person: any) => (
-                      <div key={person.id} className="text-sm">
-                        {person.profile_path && (
-                          <div className="mb-2 rounded-lg overflow-hidden h-40">
-                            <img
-                              src={`https://image.tmdb.org/t/p/w200${person.profile_path}`}
-                              alt={person.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
+                      <button
+                        key={person.id}
+                        onClick={() => setSelectedCastMember(person)}
+                        className="text-left p-3 bg-surface-secondary rounded-lg hover:bg-surface-secondary/80 transition-colors cursor-pointer text-sm"
+                      >
                         <p className="text-brand-cream font-semibold">{person.name}</p>
                         <p className="text-brand-cream/60 text-xs">{person.job}</p>
-                      </div>
+                      </button>
                     ))}
                 </div>
               </div>
@@ -206,18 +230,12 @@ export function Watch() {
                 <h3 className="text-xl font-display font-bold text-brand-cream mb-3">
                   Production
                 </h3>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-2">
                   {movie.productionCompanies.slice(0, 3).map((company) => (
-                    <div key={company.id} className="text-sm text-brand-cream/70">
-                      {company.logo_path && (
-                        <div className="mb-2 h-16">
-                          <img
-                            src={`https://image.tmdb.org/t/p/h100${company.logo_path}`}
-                            alt={company.name}
-                            className="h-full object-contain"
-                          />
-                        </div>
-                      )}
+                    <div
+                      key={company.id}
+                      className="px-3 py-2 bg-surface-secondary text-brand-cream/70 rounded text-sm"
+                    >
                       {company.name}
                     </div>
                   ))}

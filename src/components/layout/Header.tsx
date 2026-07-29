@@ -12,7 +12,7 @@ export function Header() {
         <div className="flex items-center gap-8">
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 group cursor-pointer"
           >
             <div className="text-3xl font-display font-bold text-gradient-gold">
               FILMHUB
@@ -32,7 +32,7 @@ export function Header() {
           {/* Search */}
           <button
             onClick={() => navigate('/search')}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded border border-brand-gold/30 text-brand-cream hover:border-brand-gold hover:bg-brand-gold/10 transition-all group"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded border border-brand-gold/30 text-brand-cream hover:border-brand-gold hover:bg-brand-gold/10 transition-all group cursor-pointer"
           >
             <svg
               className="w-4 h-4 group-hover:text-brand-gold transition-colors"
@@ -54,7 +54,7 @@ export function Header() {
           {isAuthenticated ? (
             <button
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-brand-gold/30 hover:border-brand-gold transition-colors group"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-brand-gold/30 hover:border-brand-gold transition-colors group cursor-pointer"
             >
               <div className="w-6 h-6 rounded-full bg-gradient-to-r from-brand-burgundy to-brand-gold flex items-center justify-center">
                 <span className="text-white text-xs font-bold">
@@ -66,7 +66,7 @@ export function Header() {
           ) : (
             <button
               onClick={() => navigate('/login')}
-              className="btn-secondary text-sm"
+              className="btn-secondary text-sm cursor-pointer"
             >
               Sign In
             </button>
@@ -81,7 +81,7 @@ function NavLink({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="text-brand-cream hover:text-brand-gold transition-colors font-body text-sm font-medium"
+      className="text-brand-cream hover:text-brand-gold transition-colors font-body text-sm font-medium cursor-pointer"
     >
       {label}
     </button>
