@@ -273,7 +273,7 @@ export function Watch() {
                   )}
                   <button
                     onClick={() => setShowTrailer(true)}
-                    className="w-full py-3 px-4 bg-brand-burgundy text-brand-cream rounded font-semibold hover:bg-brand-burgundy/80 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 px-4 bg-brand-burgundy text-brand-cream rounded font-semibold hover:bg-brand-burgundy/80 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
                       <polygon points="6,2 18,11 6,20" />
@@ -289,11 +289,30 @@ export function Watch() {
                 <div>
                   <p className="text-sm font-semibold text-brand-cream mb-3">📺 Available on</p>
                   <div className="flex flex-wrap gap-2">
-                    {providers.flatrate.map((p: any) => (
-                      watchLink && (
+                    {providers.flatrate.map((p: any) => {
+                      const getProviderLink = (providerName: string, movieTitle: string | null): string => {
+                        if (!movieTitle) return watchLink || '#'
+                        const titleParam = encodeURIComponent(movieTitle)
+                        const providerLower = providerName.toLowerCase()
+
+                        if (providerLower.includes('netflix')) {
+                          return `https://www.netflix.com/tr/search?q=${titleParam}`
+                        } else if (providerLower.includes('prime') || providerLower.includes('amazon')) {
+                          return `https://www.primevideo.com/search?keyword=${titleParam}`
+                        } else if (providerLower.includes('disney')) {
+                          return `https://www.disneyplus.com/search?q=${titleParam}`
+                        } else if (providerLower.includes('hbo')) {
+                          return `https://www.hbomaxtr.com/search?q=${titleParam}`
+                        } else if (providerLower.includes('turkcell')) {
+                          return `https://www.tv.turkcell.com.tr/search?q=${titleParam}`
+                        }
+                        return watchLink || '#'
+                      }
+
+                      return (
                         <a
                           key={p.providerId}
-                          href={watchLink}
+                          href={getProviderLink(p.providerName, movie?.title || '')}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="py-2 px-3 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all text-sm flex items-center gap-2"
@@ -304,7 +323,7 @@ export function Watch() {
                           {p.providerName}
                         </a>
                       )
-                    ))}
+                    })}
                   </div>
                 </div>
               ) : null}
@@ -312,7 +331,7 @@ export function Watch() {
               {/* Add to Watchlist Button */}
               <button
                 onClick={() => addToWatchlist(movie.id)}
-                className={`w-full py-3 px-4 rounded font-semibold transition-all ${
+                className={`w-full py-3 px-4 rounded font-semibold transition-all cursor-pointer ${
                   inWatchlist
                     ? 'bg-brand-gold text-surface-primary'
                     : 'border-2 border-brand-gold text-brand-gold hover:bg-brand-gold/10'
@@ -328,7 +347,7 @@ export function Watch() {
                     <button
                       key={star}
                       onClick={() => rateMovie(movie.id, star)}
-                      className={`text-2xl transition-transform hover:scale-110 ${
+                      className={`text-2xl transition-transform hover:scale-110 cursor-pointer ${
                         rating && rating >= star
                           ? 'text-brand-gold'
                           : 'text-brand-gold/30'
