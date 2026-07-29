@@ -116,16 +116,18 @@ export function Watch() {
       ) : (
         <div className="w-full h-screen bg-black flex items-center justify-center">
           <div className="text-center">
-            <svg className="w-20 h-20 text-brand-gold/40 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-              <polygon points="6,2 18,11 6,20" />
-            </svg>
-            <p className="text-brand-cream/60 mb-6">Full movie streaming coming soon</p>
             {trailerKey && (
               <button
                 onClick={() => setShowTrailer(true)}
-                className="btn-primary"
+                className="btn-primary flex items-center gap-2"
               >
-                ▶ Watch Trailer
+                <svg
+                  className="w-5 h-5 fill-current"
+                  viewBox="0 0 20 20"
+                >
+                  <polygon points="6,2 18,11 6,20" />
+                </svg>
+                Watch Trailer
               </button>
             )}
           </div>
