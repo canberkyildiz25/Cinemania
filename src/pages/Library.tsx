@@ -1,178 +1,139 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useUserStore } from '../stores/userStore'
 import { tmdbService } from '../services/tmdbService'
 import { MovieCard } from '../components/features/movies/MovieCard'
+import { Footer } from '../components/layout/Footer'
 import type { Movie } from '../types'
 
-type LibraryView = 'watchlist' | 'watched' | 'ratings'
+type LibraryView = 'watchlist' | 'ratings'
 
 export function Library() {
-  const { watchlist, watchHistory, ratings, isAuthenticated } = useUserStore()
+  const navigate = useNavigate()
+  const { watchlist, ratings } = useUserStore()
   const [view, setView] = useState<LibraryView>('watchlist')
   const [movies, setMovies] = useState<Movie[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) return
+    const movieIds = view === 'watchlist' ? watchlist : Object.keys(ratings).map(Number)
+
+    if (movieIds.length === 0) {
+      setMovies([])
+      return
+    }
+
+    let cancelled = false
 
     const fetchMovies = async () => {
       try {
         setIsLoading(true)
-
-        let movieIds: number[] = []
-
-        if (view === 'watchlist') {
-          movieIds = watchlist
-        } else if (view === 'watched') {
-          movieIds = watchHistory
-            .filter((session) => session.completed)
-            .map((session) => session.movieId)
-            .slice(0, 20)
-        } else if (view === 'ratings') {
-          movieIds = Object.keys(ratings).map((id) => parseInt(id))
-        }
-
-        if (movieIds.length === 0) {
-          setMovies([])
-          setIsLoading(false)
-          return
-        }
-
-        // Fetch movie details in batches
-        const movieDetails = await Promise.all(
-          movieIds.slice(0, 20).map((id) =>
-            tmdbService.getMovieDetails(id).catch(() => null)
-          )
+        const details = await Promise.all(
+          movieIds.slice(0, 30).map((id) => tmdbService.getMovieDetails(id).catch(() => null)),
         )
-
-        setMovies(movieDetails.filter((m) => m !== null) as Movie[])
+        if (!cancelled) setMovies(details.filter(Boolean) as Movie[])
       } catch (err) {
         console.error('Failed to fetch library movies:', err)
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     fetchMovies()
-  }, [view, watchlist, watchHistory, ratings, isAuthenticated])
+    return () => {
+      cancelled = true
+    }
+  }, [view, watchlist, ratings])
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-surface-primary flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-display font-bold text-brand-cream mb-4">
-            Sign in to view your library
-          </h1>
-          <button className="btn-primary">Sign In</button>
-        </div>
-      </div>
-    )
-  }
-
-  const views = [
-    { id: 'watchlist' as const, label: 'Watchlist', count: watchlist.length },
-    {
-      id: 'watched' as const,
-      label: 'Watched',
-      count: watchHistory.filter((s) => s.completed).length,
-    },
-    { id: 'ratings' as const, label: 'Your Ratings', count: Object.keys(ratings).length },
+  const tabs = [
+    { id: 'watchlist' as const, label: 'Listem', count: watchlist.length },
+    { id: 'ratings' as const, label: 'Puanladıklarım', count: Object.keys(ratings).length },
   ]
 
   return (
-    <div className="min-h-screen bg-surface-primary pt-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12"
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-10"
         >
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-cream mb-2">
-            My Library
-          </h1>
-          <p className="text-brand-cream/60">Your personal movie collection</p>
+          <p className="eyebrow mb-4">KOLEKSIYON</p>
+          <h1 className="font-display text-brand-cream mb-2">Kitaplığım</h1>
+          <p className="text-brand-cream/55">Kaydettiğin ve puanladığın filmler</p>
         </motion.div>
 
-        {/* View Tabs */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="flex gap-4 mb-12 border-b border-brand-gold/20 pb-4"
-        >
-          {views.map((tab) => (
+        <div className="flex gap-8 mb-10 border-b border-brand-gold/15">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setView(tab.id)}
-              className={`px-4 py-2 font-semibold transition-all relative ${
-                view === tab.id
-                  ? 'text-brand-gold'
-                  : 'text-brand-cream/60 hover:text-brand-cream'
+              className={`relative pb-4 text-sm font-medium transition-colors duration-300 ${
+                view === tab.id ? 'text-brand-gold' : 'text-brand-cream/55 hover:text-brand-cream'
               }`}
             >
               {tab.label}
-              <span className="ml-2 text-sm text-brand-cream/40">({tab.count})</span>
+              <span className="ml-2 font-mono text-xs text-brand-cream/35">{tab.count}</span>
               {view === tab.id && (
-                <motion.div
-                  layoutId="underline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-gold"
+                <motion.span
+                  layoutId="library-underline"
+                  className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-brand-gold to-brand-gold/30"
                 />
               )}
             </button>
           ))}
-        </motion.div>
+        </div>
 
-        {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
+          <div className="flex justify-center py-20">
+            <div className="w-10 h-10 border-2 border-brand-gold/20 border-t-brand-gold rounded-full animate-reel-spin" />
           </div>
         ) : movies.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
             {movies.map((movie, idx) => (
               <motion.div
                 key={movie.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 22 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ delay: Math.min(idx * 0.04, 0.35), duration: 0.45 }}
+                className="relative"
               >
-                <div className="relative">
-                  <MovieCard movie={movie} />
-                  {view === 'ratings' && ratings[movie.id] && (
-                    <div className="absolute top-2 left-2 bg-brand-gold text-surface-primary px-2 py-1 rounded font-bold">
-                      ★ {ratings[movie.id]}
-                    </div>
-                  )}
-                </div>
+                <MovieCard movie={movie} onPlay={(m) => navigate(`/watch/${m.id}`)} />
+                {view === 'ratings' && ratings[movie.id] && (
+                  <span className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1 px-2 py-1 rounded-md bg-brand-gold text-surface-primary text-[0.7rem] font-mono font-bold">
+                    ★ {ratings[movie.id]}
+                  </span>
+                )}
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-20">
             <svg
-              className="w-16 h-16 text-brand-gold/30 mx-auto mb-4"
+              className="w-14 h-14 text-brand-gold/25 mx-auto mb-6"
               fill="none"
               stroke="currentColor"
+              strokeWidth={1.5}
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 4a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V4z" />
             </svg>
-            <p className="text-brand-cream/60 text-lg">
-              {view === 'watchlist' && "You haven't added any movies yet"}
-              {view === 'watched' && "You haven't watched any movies yet"}
-              {view === 'ratings' && "You haven't rated any movies yet"}
+            <p className="text-brand-cream/50 mb-7">
+              {view === 'watchlist'
+                ? 'Henüz listene film eklemedin'
+                : 'Henüz hiçbir filme puan vermedin'}
             </p>
-            <button className="btn-secondary mt-6">Browse Movies</button>
+            <button onClick={() => navigate('/')} className="btn-primary">
+              Filmlere göz at
+            </button>
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   )
 }

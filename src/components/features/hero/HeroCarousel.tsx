@@ -2,271 +2,217 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { tmdbService } from '../../../services/tmdbService'
+import { useUserStore } from '../../../stores/userStore'
+import { TrailerModal } from '../movies/TrailerModal'
 import type { Movie } from '../../../types'
 
 interface HeroCarouselProps {
   movies: Movie[]
 }
 
-interface TrailerKey {
-  [key: number]: string
-}
-
 export function HeroCarousel({ movies }: HeroCarouselProps) {
   const navigate = useNavigate()
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserStore()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
-  const [trailerKeys, setTrailerKeys] = useState<TrailerKey>({})
+  const [trailerKeys, setTrailerKeys] = useState<Record<number, string>>({})
+  const [showTrailer, setShowTrailer] = useState(false)
 
-  const currentMovie = movies[currentIndex] || movies[0]
+  const currentMovie = movies[currentIndex] ?? movies[0]
 
-  // Fetch trailers for all movies
   useEffect(() => {
+    let cancelled = false
+
     const fetchTrailers = async () => {
-      const keys: TrailerKey = {}
-      for (const movie of movies) {
-        try {
+      const entries = await Promise.all(
+        movies.map(async (movie) => {
           const videos = await tmdbService.getMovieVideos(movie.id)
-          const trailer = videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube')
-          if (trailer) {
-            keys[movie.id] = trailer.key
-          }
-        } catch (err) {
-          console.error(`Failed to fetch trailer for ${movie.id}`)
-        }
+          const trailer =
+            videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube') ||
+            videos.find((v) => v.type === 'Teaser' && v.site === 'YouTube')
+          return trailer ? ([movie.id, trailer.key] as const) : null
+        }),
+      )
+
+      if (!cancelled) {
+        setTrailerKeys(Object.fromEntries(entries.filter(Boolean) as Array<readonly [number, string]>))
       }
-      setTrailerKeys(keys)
     }
 
-    if (movies.length > 0) {
-      fetchTrailers()
+    if (movies.length > 0) fetchTrailers()
+    return () => {
+      cancelled = true
     }
   }, [movies])
 
   useEffect(() => {
-    if (!autoPlay || movies.length === 0) return
-
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % movies.length)
-    }, 6000)
-
+    if (!autoPlay || movies.length < 2 || showTrailer) return
+    const timer = setInterval(() => setCurrentIndex((prev) => (prev + 1) % movies.length), 7000)
     return () => clearInterval(timer)
-  }, [autoPlay, movies.length])
+  }, [autoPlay, movies.length, showTrailer])
 
   const goToSlide = (index: number) => {
-    setCurrentIndex(index)
+    setCurrentIndex((index + movies.length) % movies.length)
     setAutoPlay(false)
   }
 
-  const [showTrailer, setShowTrailer] = useState(false)
-
-  const handleTrailerClick = () => {
-    if (trailerKeys[currentMovie.id]) {
-      setShowTrailer(true)
-    }
-  }
-
   if (!currentMovie) {
-    return (
-      <div className="w-full h-96 bg-surface-secondary animate-pulse rounded-lg" />
-    )
+    return <div className="w-full h-[70vh] bg-surface-secondary animate-pulse" />
   }
+
+  const year = currentMovie.releaseDate ? new Date(currentMovie.releaseDate).getFullYear() : null
+  const trailerKey = trailerKeys[currentMovie.id]
+  const inWatchlist = isInWatchlist(currentMovie.id)
+  const openMovie = () => navigate(`/watch/${currentMovie.id}`)
 
   return (
     <>
-      {/* Trailer Modal */}
-      {showTrailer && trailerKeys[currentMovie.id] && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-4xl">
-            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
-              <button
-                onClick={() => setShowTrailer(false)}
-                className="absolute top-4 right-4 z-10 p-2 bg-brand-gold/20 hover:bg-brand-gold/40 rounded-full transition-colors"
-              >
-                <svg className="w-6 h-6 text-brand-gold" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${trailerKeys[currentMovie.id]}`}
-                title="Movie Trailer"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="relative w-full h-screen md:h-[600px] overflow-hidden bg-surface-primary">
-      {/* Slides */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0"
-        >
-          {/* Backdrop Image */}
-          <div className="absolute inset-0 cursor-pointer" onClick={(e) => {
-            e.stopPropagation()
-            navigate(`/watch/${currentMovie.id}`)
-          }}>
-            <img
-              src={currentMovie.backdropPath}
-              alt={currentMovie.title}
-              className="w-full h-full object-cover pointer-events-none"
-            />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-surface-primary via-surface-primary/50 to-transparent pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-primary to-transparent pointer-events-none" />
-            <div className="absolute inset-0 pointer-events-none" />
-          </div>
-
-          {/* Content */}
-          <div className="absolute inset-0 flex items-end md:items-center pb-12 md:pb-0 pointer-events-none">
-            <div className="max-w-2xl px-6 md:px-12 py-8 pointer-events-auto">
-              {/* Eyebrow */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="eyebrow mb-4"
-              >
-                NOW FEATURED
-              </motion.div>
-
-              {/* Title */}
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-4xl md:text-6xl font-display font-bold text-brand-cream mb-4 leading-tight"
-              >
-                {currentMovie.title}
-              </motion.h1>
-
-              {/* Meta Info */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="flex flex-wrap items-center gap-6 mb-6 text-sm md:text-base"
-              >
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-brand-gold"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="text-brand-gold">{currentMovie.voteAverage.toFixed(1)}</span>
-                </div>
-
-                {currentMovie.releaseDate && (
-                  <div>{new Date(currentMovie.releaseDate).getFullYear()}</div>
-                )}
-
-                {currentMovie.runtime && (
-                  <div>{Math.floor(currentMovie.runtime / 60)}h {currentMovie.runtime % 60}m</div>
-                )}
-              </motion.div>
-
-              {/* Description */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="text-brand-cream/80 line-clamp-3 mb-8 max-w-xl"
-              >
-                {currentMovie.overview}
-              </motion.p>
-
-              {/* Actions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="flex flex-wrap gap-4"
-              >
-                <button
-                  onClick={handleTrailerClick}
-                  className="btn-primary flex items-center gap-2 cursor-pointer"
-                  disabled={!trailerKeys[currentMovie.id]}
-                >
-                  <svg
-                    className="w-5 h-5 fill-current"
-                    viewBox="0 0 20 20"
-                  >
-                    <polygon points="6,2 18,11 6,20" />
-                  </svg>
-                  Watch Trailer
-                </button>
-
-                <button className="btn-secondary flex items-center gap-2 cursor-pointer">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  </svg>
-                  Add to Watchlist
-                </button>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
+      <AnimatePresence>
+        {showTrailer && trailerKey && (
+          <TrailerModal
+            trailerKey={trailerKey}
+            title={currentMovie.title}
+            onClose={() => setShowTrailer(false)}
+          />
+        )}
       </AnimatePresence>
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
-        {movies.slice(0, 5).map((_, index) => (
-          <motion.button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`h-2 rounded-full transition-all ${
-              index === currentIndex
-                ? 'bg-brand-gold w-8'
-                : 'bg-brand-gold/40 w-2 hover:bg-brand-gold/60'
-            }`}
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
-          />
-        ))}
-      </div>
+      <section className="relative w-full h-[85vh] md:h-[78vh] overflow-hidden">
+        {/* Arka plan — tüm alan tıklanabilir, üstteki kontroller kendi tıklamalarını yutar */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentMovie.id}
+            initial={{ opacity: 0, scale: 1.06 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0"
+          >
+            <img
+              src={currentMovie.backdropPath}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={() => goToSlide((currentIndex - 1 + movies.length) % movies.length)}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-2 rounded-full glass hover:bg-brand-gold/20 transition-colors"
-      >
-        <svg className="w-6 h-6 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+        {/* Katmanlı karartma */}
+        <div className="absolute inset-0 bg-gradient-to-r from-surface-primary via-surface-primary/75 to-surface-primary/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-primary via-transparent to-surface-primary/50" />
 
-      <button
-        onClick={() => goToSlide((currentIndex + 1) % movies.length)}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-2 rounded-full glass hover:bg-brand-gold/20 transition-colors"
-      >
-        <svg className="w-6 h-6 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-      </div>
+        {/* Tıklama katmanı — görselin herhangi bir yerine basınca film sayfası açılır */}
+        <button
+          onClick={openMovie}
+          aria-label={`${currentMovie.title} sayfasını aç`}
+          className="absolute inset-0 z-10 w-full h-full"
+        />
+
+        {/* İçerik — tıklama katmanının üstünde */}
+        <div className="relative z-20 h-full flex items-end md:items-center pointer-events-none">
+          <div className="max-w-2xl px-6 md:px-14 pb-20 md:pb-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentMovie.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <p className="eyebrow mb-5">VITRINDE</p>
+
+                <h1
+                  onClick={openMovie}
+                  className="font-display text-brand-cream mb-5 pointer-events-auto cursor-pointer transition-colors duration-300 hover:text-brand-gold"
+                >
+                  {currentMovie.title}
+                </h1>
+
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-6 font-mono text-xs tracking-wider text-brand-cream/65">
+                  <span className="inline-flex items-center gap-1.5 text-brand-gold">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {currentMovie.voteAverage.toFixed(1)}
+                  </span>
+                  {year && <span>{year}</span>}
+                  <span>{currentMovie.voteCount.toLocaleString('tr-TR')} OY</span>
+                </div>
+
+                <p className="text-brand-cream/75 line-clamp-3 mb-9 max-w-xl leading-relaxed">
+                  {currentMovie.overview}
+                </p>
+
+                <div className="flex flex-wrap gap-3 pointer-events-auto">
+                  <button
+                    onClick={() => setShowTrailer(true)}
+                    className="btn-primary"
+                    disabled={!trailerKey}
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                      <polygon points="6,2 18,11 6,20" />
+                    </svg>
+                    Fragmanı izle
+                  </button>
+
+                  <button onClick={openMovie} className="btn-secondary">
+                    Detaylar
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      inWatchlist ? removeFromWatchlist(currentMovie.id) : addToWatchlist(currentMovie.id)
+                    }
+                    className="btn-secondary"
+                    aria-label={inWatchlist ? 'Listemden çıkar' : 'Listeme ekle'}
+                  >
+                    {inWatchlist ? '✓' : '+'}
+                  </button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Slayt göstergeleri */}
+        <div className="absolute bottom-8 left-6 md:left-14 z-30 flex items-center gap-3">
+          {movies.map((movie, index) => (
+            <button
+              key={movie.id}
+              onClick={() => goToSlide(index)}
+              aria-label={`${index + 1}. filme geç`}
+              className={`h-[3px] rounded-full transition-all duration-500 ${
+                index === currentIndex
+                  ? 'w-10 bg-brand-gold shadow-[0_0_12px_rgba(212,175,55,0.8)]'
+                  : 'w-5 bg-brand-cream/30 hover:bg-brand-cream/60'
+              }`}
+            />
+          ))}
+          <span className="ml-2 font-mono text-[0.7rem] text-brand-cream/40 tracking-widest">
+            {String(currentIndex + 1).padStart(2, '0')} / {String(movies.length).padStart(2, '0')}
+          </span>
+        </div>
+
+        {/* Yön okları */}
+        <button
+          onClick={() => goToSlide(currentIndex - 1)}
+          aria-label="Önceki film"
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full glass text-brand-gold transition-all duration-300 hover:bg-brand-gold/20 hover:-translate-x-0.5 hidden md:block"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          onClick={() => goToSlide(currentIndex + 1)}
+          aria-label="Sonraki film"
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full glass text-brand-gold transition-all duration-300 hover:bg-brand-gold/20 hover:translate-x-0.5 hidden md:block"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </section>
     </>
   )
 }

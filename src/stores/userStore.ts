@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { User, UserPreferences, WatchingSession } from '../types'
 
 interface UserState {
@@ -48,7 +49,9 @@ const defaultPreferences: UserPreferences = {
   theme: 'dark',
 }
 
-export const useUserStore = create<UserState>((set, get) => ({
+export const useUserStore = create<UserState>()(
+  persist(
+    (set, get) => ({
   // Initial state
   currentUser: null,
   isAuthenticated: false,
@@ -152,4 +155,19 @@ export const useUserStore = create<UserState>((set, get) => ({
       ratings: {},
       favoriteGenres: [],
     }),
-}))
+    }),
+    {
+      // liste ve puanlar tarayıcıda kalsın — yenileyince kaybolmasın
+      name: 'filmhub-user',
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        isAuthenticated: state.isAuthenticated,
+        watchlist: state.watchlist,
+        ratings: state.ratings,
+        favoriteGenres: state.favoriteGenres,
+        preferences: state.preferences,
+        watchHistory: state.watchHistory,
+      }),
+    },
+  ),
+)

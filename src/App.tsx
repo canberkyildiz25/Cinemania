@@ -1,49 +1,33 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { useMovieStore } from './stores/movieStore'
-import { tmdbService } from './services/tmdbService'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { Header } from './components/layout/Header'
 import { Home } from './pages/Home'
 import { Watch } from './pages/Watch'
 import { Search } from './pages/Search'
 import { Library } from './pages/Library'
-import { Profile } from './pages/Profile'
 import './styles/globals.css'
 
-function App() {
-  const { setTrendingMovies, setFilteredMovies, setIsLoading, setError } = useMovieStore()
-
+/** Rota değişince sayfayı başa sar — SPA'da tarayıcı bunu kendi yapmaz. */
+function ScrollToTop() {
+  const { pathname } = useLocation()
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        setIsLoading(true)
-        const [trending, popular] = await Promise.all([
-          tmdbService.getTrendingMovies(),
-          tmdbService.getPopularMovies(),
-        ])
-        setTrendingMovies(trending.results)
-        setFilteredMovies(popular.results)
-      } catch (err) {
-        setError('Failed to load movies')
-        console.error(err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+  }, [pathname])
+  return null
+}
 
-    fetchInitialData()
-  }, [setTrendingMovies, setFilteredMovies, setIsLoading, setError])
-
+function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-surface-primary">
+      <ScrollToTop />
+      <div className="min-h-screen">
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route path="/search" element={<Search />} />
           <Route path="/library" element={<Library />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </div>
     </Router>

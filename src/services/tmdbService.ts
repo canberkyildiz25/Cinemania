@@ -15,6 +15,7 @@ interface TMDBMovie {
   vote_average: number
   vote_count: number
   genre_ids: number[]
+  genres?: Array<{ id: number; name: string }>
   popularity: number
   runtime?: number
   budget?: number
@@ -35,6 +36,21 @@ const apiClient = axios.create({
   },
 })
 
+interface TMDBPaginated<T> {
+  page: number
+  results: T[]
+  total_pages: number
+  total_results: number
+}
+
+/** TMDB snake_case sayfalama alanlarını uygulamanın camelCase şekline çevirir. */
+const transformPaginated = (data: TMDBPaginated<TMDBMovie>): PaginatedResponse<Movie> => ({
+  page: data.page,
+  results: (data.results || []).map(transformMovie),
+  totalPages: data.total_pages ?? 1,
+  totalResults: data.total_results ?? 0,
+})
+
 const transformMovie = (tmdbMovie: TMDBMovie): Movie => ({
   id: tmdbMovie.id,
   title: tmdbMovie.title,
@@ -49,6 +65,7 @@ const transformMovie = (tmdbMovie: TMDBMovie): Movie => ({
   voteAverage: tmdbMovie.vote_average,
   voteCount: tmdbMovie.vote_count,
   genreIds: tmdbMovie.genre_ids || [],
+  genres: tmdbMovie.genres || [],
   popularity: tmdbMovie.popularity,
   runtime: tmdbMovie.runtime,
   budget: tmdbMovie.budget,
@@ -62,78 +79,64 @@ const transformMovie = (tmdbMovie: TMDBMovie): Movie => ({
 export const tmdbService = {
   // Quality Movies (Trending with filters)
   async getTrendingMovies(page = 1): Promise<PaginatedResponse<Movie>> {
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       '/discover/movie',
       {
         params: {
           page,
           sort_by: 'popularity.desc',
-          vote_count_gte: 500,
-          vote_average_gte: 6.5,
-          language: 'en',
+          // TMDB nokta ile ayrılmış filtre adları bekler; alt çizgili hali sessizce yok sayılıyordu
+          'vote_count.gte': 400,
+          'vote_average.gte': 6,
+          include_adult: false,
         },
       }
     )
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 
   // Popular
   async getPopularMovies(page = 1): Promise<PaginatedResponse<Movie>> {
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       '/movie/popular',
       {
         params: { page },
       }
     )
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 
   // Top Rated
   async getTopRatedMovies(page = 1): Promise<PaginatedResponse<Movie>> {
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       '/movie/top_rated',
       {
         params: { page },
       }
     )
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 
   // Upcoming
   async getUpcomingMovies(page = 1): Promise<PaginatedResponse<Movie>> {
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       '/movie/upcoming',
       {
         params: { page },
       }
     )
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 
   // Search
   async searchMovies(query: string, page = 1): Promise<PaginatedResponse<Movie>> {
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       '/search/movie',
       {
         params: { query, page },
       }
     )
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 
   // Get Movie Details
@@ -204,16 +207,13 @@ export const tmdbService = {
 
   // Get Recommendations
   async getRecommendations(movieId: number, page = 1): Promise<PaginatedResponse<Movie>> {
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       `/movie/${movieId}/recommendations`,
       {
         params: { page },
       }
     )
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 
   // Get Movie Videos (Trailers)
@@ -239,7 +239,7 @@ export const tmdbService = {
   },
 
   // Get Where to Watch Link
-  async getWatchProviderLink(movieId: number, region: string = 'US'): Promise<string | null> {
+  async getWatchProviderLink(movieId: number, region: string = 'TR'): Promise<string | null> {
     try {
       const response = await apiClient.get(`/movie/${movieId}/watch/providers`, {
         params: { region },
@@ -290,14 +290,11 @@ export const tmdbService = {
       params.sort_by = `${sortMap[filters.sortBy]}.${filters.sortOrder || 'desc'}`
     }
 
-    const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
+    const response = await apiClient.get<TMDBPaginated<TMDBMovie>>(
       '/discover/movie',
       { params }
     )
 
-    return {
-      ...response.data,
-      results: response.data.results.map(transformMovie),
-    }
+    return transformPaginated(response.data)
   },
 }
