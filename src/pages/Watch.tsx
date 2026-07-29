@@ -184,6 +184,43 @@ export function Watch() {
               </div>
             )}
 
+            {/* Cast */}
+            {movie.credits?.cast && movie.credits.cast.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-display font-bold text-brand-cream mb-4">
+                  Cast
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {movie.credits.cast.slice(0, 8).map((actor: any) => (
+                    <div key={actor.id} className="text-sm">
+                      <p className="text-brand-cream font-semibold">{actor.name}</p>
+                      <p className="text-brand-cream/60 text-xs">{actor.character}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Crew */}
+            {movie.credits?.crew && movie.credits.crew.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-display font-bold text-brand-cream mb-4">
+                  Crew
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {movie.credits.crew
+                    .filter((person: any) => ['Director', 'Producer', 'Screenplay', 'Cinematography'].includes(person.job))
+                    .slice(0, 6)
+                    .map((person: any) => (
+                      <div key={person.id} className="text-sm">
+                        <p className="text-brand-cream font-semibold">{person.name}</p>
+                        <p className="text-brand-cream/60 text-xs">{person.job}</p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Production */}
             {movie.productionCompanies && movie.productionCompanies.length > 0 && (
               <div className="mb-6">
@@ -233,47 +270,28 @@ export function Watch() {
 
               {/* Where to Watch Button */}
               {/* Platforms Section */}
-              {providers && (providers.flatrate || providers.rent || providers.buy) ? (
+              {providers && providers.flatrate && providers.flatrate.length > 0 ? (
                 <div>
-                  <p className="text-sm font-semibold text-brand-cream mb-3">
-                    {providers.flatrate ? '📺 Available on Streaming' : '💰 Where to Watch'}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {providers.flatrate?.map((p: any) => (
-                      <div key={p.provider_id} className="flex items-center gap-2 bg-brand-gold/20 rounded px-3 py-2">
-                        {p.logo_path && (
-                          <img src={`https://image.tmdb.org/t/p/original${p.logo_path}`} alt={p.provider_name} className="w-8 h-8 rounded" />
-                        )}
-                        <span className="text-sm text-brand-cream">{p.provider_name}</span>
-                      </div>
+                  <p className="text-sm font-semibold text-brand-cream mb-3">📺 Available on</p>
+                  <div className="flex flex-wrap gap-2">
+                    {providers.flatrate.map((p: any) => (
+                      watchLink && (
+                        <a
+                          key={p.provider_id}
+                          href={watchLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2 px-3 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all text-sm flex items-center gap-2"
+                        >
+                          {p.logo_path && (
+                            <img src={`https://image.tmdb.org/t/p/original${p.logo_path}`} alt={p.provider_name} className="w-6 h-6 rounded" />
+                          )}
+                          Watch on {p.provider_name}
+                        </a>
+                      )
                     ))}
                   </div>
-                  {watchLink && (
-                    <a
-                      href={watchLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-3 px-4 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.343a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM16.364 15.364a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM11 15a1 1 0 10-2 0v1a1 1 0 102 0v-1zM4.343 15.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM2 10a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.343 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707z" />
-                      </svg>
-                      View More Platforms
-                    </a>
-                  )}
                 </div>
-              ) : watchLink ? (
-                <a
-                  href={watchLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 px-4 bg-brand-gold text-surface-primary rounded font-semibold hover:bg-brand-gold/90 transition-all flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.343a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM16.364 15.364a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM11 15a1 1 0 10-2 0v1a1 1 0 102 0v-1zM4.343 15.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 101.414 1.414l.707-.707zM2 10a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM4.343 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707z" />
-                  </svg>
-                  Where to Watch
-                </a>
               ) : null}
 
               {/* Add to Watchlist Button */}
