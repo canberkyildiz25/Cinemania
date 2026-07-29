@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { tmdbService } from '../../../services/tmdbService'
 import type { Movie } from '../../../types'
@@ -12,6 +13,7 @@ interface TrailerKey {
 }
 
 export function HeroCarousel({ movies }: HeroCarouselProps) {
+  const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
   const [trailerKeys, setTrailerKeys] = useState<TrailerKey>({})
@@ -111,20 +113,24 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
           className="absolute inset-0"
         >
           {/* Backdrop Image */}
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 cursor-pointer" onClick={(e) => {
+            e.stopPropagation()
+            navigate(`/watch/${currentMovie.id}`)
+          }}>
             <img
               src={currentMovie.backdropPath}
               alt={currentMovie.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover pointer-events-none"
             />
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-surface-primary via-surface-primary/50 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-primary to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-surface-primary via-surface-primary/50 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-primary to-transparent pointer-events-none" />
+            <div className="absolute inset-0 pointer-events-none" />
           </div>
 
           {/* Content */}
-          <div className="absolute inset-0 flex items-end md:items-center pb-12 md:pb-0">
-            <div className="max-w-2xl px-6 md:px-12 py-8">
+          <div className="absolute inset-0 flex items-end md:items-center pb-12 md:pb-0 pointer-events-none">
+            <div className="max-w-2xl px-6 md:px-12 py-8 pointer-events-auto">
               {/* Eyebrow */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -191,7 +197,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               >
                 <button
                   onClick={handleTrailerClick}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary flex items-center gap-2 cursor-pointer"
                   disabled={!trailerKeys[currentMovie.id]}
                 >
                   <svg
@@ -203,7 +209,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                   Watch Trailer
                 </button>
 
-                <button className="btn-secondary flex items-center gap-2">
+                <button className="btn-secondary flex items-center gap-2 cursor-pointer">
                   <svg
                     className="w-5 h-5"
                     fill="none"
