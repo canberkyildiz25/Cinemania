@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { tmdbService } from '../services/tmdbService'
+import { useMovieStore } from '../stores/movieStore'
 import { useUserStore } from '../stores/userStore'
 import type { Movie } from '../types'
 
 export function Watch() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { allMovies } = useMovieStore() as any
   const [movie, setMovie] = useState<Movie | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [recommendations, setRecommendations] = useState<Movie[]>([])
@@ -24,6 +26,14 @@ export function Watch() {
       if (!id) return
       try {
         setIsLoading(true)
+
+        // Check if it's an archive movie (free movies from Archive.org)
+        const archiveMovie = allMovies?.find((m: Movie) => m.id.toString() === id && m.archiveId)
+        if (archiveMovie) {
+          setMovie(archiveMovie)
+          return
+        }
+
         const movieId = parseInt(id)
         const [movieData, recsData, videosData, watchLinkData, providersData] = await Promise.all([
           tmdbService.getMovieDetails(movieId),
@@ -52,7 +62,7 @@ export function Watch() {
     }
 
     fetchMovie()
-  }, [id])
+  }, [id, allMovies])
 
   if (isLoading) {
     return (

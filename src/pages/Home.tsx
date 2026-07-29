@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMovieStore } from '../stores/movieStore'
 import { useUIStore } from '../stores/uiStore'
-import { useUserStore } from '../stores/userStore'
-import { tmdbService } from '../services/tmdbService'
+import { archiveService } from '../services/archiveService'
 import { HeroCarousel } from '../components/features/hero/HeroCarousel'
 import { MovieCarousel } from '../components/features/movies/MovieCarousel'
 import type { Movie } from '../types'
@@ -11,54 +10,41 @@ import type { Movie } from '../types'
 export function Home() {
   const navigate = useNavigate()
   const {
-    trendingMovies,
-    allMovies,
-    recommendedMovies,
-    setRecommendedMovies,
     setIsLoading,
     setError,
   } = useMovieStore() as any
 
   const { setCurrentPage } = useUIStore() as any
-  const { getContinueWatchingMovies } = useUserStore() as any
-  const [continueWatchingMovies, setContinueWatchingMovies] = useState<Movie[]>([])
-  const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([])
+  const [freeMovies, setFreeMovies] = useState<Movie[]>([])
+  const [classicFilms, setClassicFilms] = useState<Movie[]>([])
 
   useEffect(() => {
     setCurrentPage('home')
   }, [setCurrentPage])
 
   useEffect(() => {
-    const fetchAdditionalData = async () => {
+    const fetchFreeMovies = async () => {
       try {
         setIsLoading(true)
 
-        const [topRated, recommended] = await Promise.all([
-          tmdbService.getTopRatedMovies(),
-          trendingMovies.length > 0
-            ? tmdbService.getRecommendations(trendingMovies[0].id)
-            : Promise.resolve({ results: [] }),
+        const [archiveMovies, classicMovies] = await Promise.all([
+          archiveService.searchFreeMovies('film'),
+          archiveService.searchFreeMovies('classic'),
         ])
 
-        setTopRatedMovies(topRated.results)
-        setRecommendedMovies(recommended.results)
-
-        // Get continue watching from user store
-        const sessions = getContinueWatchingMovies() || []
-        if (sessions.length > 0) {
-          // In a real app, fetch movie details for these sessions
-          setContinueWatchingMovies(sessions.slice(0, 5))
-        }
+        console.log('State update - Free movies:', archiveMovies.length, 'Classic films:', classicMovies.length)
+        setFreeMovies(archiveMovies)
+        setClassicFilms(classicMovies)
       } catch (err) {
-        setError('Failed to load additional content')
+        setError('Failed to load free movies')
         console.error(err)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchAdditionalData()
-  }, [trendingMovies])
+    fetchFreeMovies()
+  }, [])
 
   const handlePlayMovie = (movie: Movie) => {
     navigate(`/watch/${movie.id}`)
@@ -67,53 +53,29 @@ export function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Carousel */}
-      {trendingMovies.length > 0 && <HeroCarousel movies={trendingMovies} />}
+      {freeMovies.length > 0 && <HeroCarousel movies={freeMovies} />}
 
       {/* Main Content */}
       <div className="space-y-12 py-8 md:py-16">
-        {/* Continue Watching */}
-        {continueWatchingMovies.length > 0 && (
+        {/* Free Movies */}
+        {freeMovies.length > 0 && (
           <MovieCarousel
-            title="Continue Watching"
-            subtitle="Pick up where you left off"
-            movies={continueWatchingMovies}
+            title="Watch Free"
+            subtitle="Completely free movies - no subscription needed"
+            movies={freeMovies.slice(0, 10)}
             onPlayMovie={handlePlayMovie}
           />
         )}
 
-        {/* Trending Now */}
-        <MovieCarousel
-          title="Trending Now"
-          subtitle="What everyone is watching this week"
-          movies={trendingMovies.slice(0, 10)}
-          onPlayMovie={handlePlayMovie}
-        />
-
-        {/* Top Rated */}
-        <MovieCarousel
-          title="Top Rated"
-          subtitle="Fan favorites with the highest ratings"
-          movies={topRatedMovies.slice(0, 10)}
-          onPlayMovie={handlePlayMovie}
-        />
-
-        {/* Recommended for You */}
-        {recommendedMovies.length > 0 && (
+        {/* Classic Films */}
+        {classicFilms.length > 0 && (
           <MovieCarousel
-            title="Recommended for You"
-            subtitle="Based on movies you love"
-            movies={recommendedMovies.slice(0, 10)}
+            title="Classic Cinema"
+            subtitle="Timeless masterpieces from cinema history"
+            movies={classicFilms.slice(0, 10)}
             onPlayMovie={handlePlayMovie}
           />
         )}
-
-        {/* Popular */}
-        <MovieCarousel
-          title="Popular"
-          subtitle="Most popular movies right now"
-          movies={allMovies.slice(0, 10)}
-          onPlayMovie={handlePlayMovie}
-        />
       </div>
 
       {/* Footer */}
