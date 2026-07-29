@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { Movie } from '../../../types'
 import { MovieCard } from './MovieCard'
@@ -22,43 +22,42 @@ export function MovieCarousel({
 }: MovieCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = 400
-      const newScrollLeft =
-        scrollRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
-
-      scrollRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth',
-      })
-
-      setTimeout(() => checkScroll(), 300)
-    }
-  }
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-      setCanScrollLeft(scrollLeft > 0)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 50)
-    }
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 8)
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 8)
+  }
+
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [movies])
+
+  const scroll = (direction: 'left' | 'right') => {
+    const el = scrollRef.current
+    if (!el) return
+    const amount = el.clientWidth * 0.8
+    el.scrollTo({
+      left: el.scrollLeft + (direction === 'left' ? -amount : amount),
+      behavior: 'smooth',
+    })
   }
 
   if (isLoading) {
     return (
-      <section className="py-8 md:py-12">
+      <section className="py-8 md:py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-brand-cream mb-6">
-            {title}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {[...Array(5)].map((_, i) => (
+          <h2 className="font-display text-2xl md:text-3xl text-brand-cream mb-6 rule-gold">{title}</h2>
+          <div className="flex gap-4 overflow-hidden">
+            {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="h-72 md:h-96 bg-surface-secondary animate-pulse rounded-lg"
+                className="flex-shrink-0 w-40 md:w-48 lg:w-52 h-60 md:h-72 lg:h-80 rounded-lg bg-surface-secondary animate-pulse"
+                style={{ animationDelay: `${i * 90}ms` }}
               />
             ))}
           </div>
@@ -67,106 +66,84 @@ export function MovieCarousel({
     )
   }
 
-  if (movies.length === 0) {
-    return null
-  }
+  if (movies.length === 0) return null
 
   return (
-    <section className="py-8 md:py-12">
+    <section className="py-8 md:py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-brand-cream">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="text-brand-cream/60 text-sm mt-1">{subtitle}</p>
-            )}
+        <div className="flex items-end justify-between mb-6 gap-4">
+          <div className="rule-gold">
+            <h2 className="font-display text-2xl md:text-3xl text-brand-cream">{title}</h2>
+            {subtitle && <p className="text-brand-cream/55 text-sm mt-1.5">{subtitle}</p>}
           </div>
-          <button className="text-brand-gold hover:text-brand-cream transition-colors text-sm hidden md:block">
-            View All →
-          </button>
+
+          {/* okları başlık hizasında tut */}
+          <div className="hidden md:flex gap-2 shrink-0">
+            <CarouselArrow direction="left" disabled={!canScrollLeft} onClick={() => scroll('left')} />
+            <CarouselArrow direction="right" disabled={!canScrollRight} onClick={() => scroll('right')} />
+          </div>
         </div>
 
-        {/* Carousel */}
         <div className="relative">
-          {/* Scroll Container */}
+          {/* kenarlarda içeriğin eridiği maske */}
+          {canScrollLeft && (
+            <div className="absolute left-0 inset-y-0 w-16 z-10 pointer-events-none bg-gradient-to-r from-surface-primary to-transparent" />
+          )}
+          {canScrollRight && (
+            <div className="absolute right-0 inset-y-0 w-16 z-10 pointer-events-none bg-gradient-to-l from-surface-primary to-transparent" />
+          )}
+
           <div
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
-            style={{
-              scrollBehavior: 'smooth',
-              msOverflowStyle: 'none',
-              scrollbarWidth: 'none',
-            }}
+            className="flex gap-4 overflow-x-auto hide-scrollbar pb-2 -mx-1 px-1"
           >
             {movies.map((movie, index) => (
               <motion.div
                 key={movie.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex-shrink-0 w-40 md:w-48 lg:w-56"
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ delay: Math.min(index * 0.05, 0.4), duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="flex-shrink-0 w-40 md:w-48 lg:w-52"
               >
-                <MovieCard
-                  movie={movie}
-                  onPlay={onPlayMovie}
-                  onAddWatchlist={onAddWatchlist}
-                />
+                <MovieCard movie={movie} onPlay={onPlayMovie} onAddWatchlist={onAddWatchlist} />
               </motion.div>
             ))}
           </div>
-
-          {/* Navigation Buttons */}
-          {canScrollLeft && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 p-2 rounded-full glass hover:bg-brand-gold/20 transition-colors"
-            >
-              <svg
-                className="w-6 h-6 text-brand-gold"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </motion.button>
-          )}
-
-          {canScrollRight && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 p-2 rounded-full glass hover:bg-brand-gold/20 transition-colors"
-            >
-              <svg
-                className="w-6 h-6 text-brand-gold"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </motion.button>
-          )}
         </div>
       </div>
     </section>
+  )
+}
+
+function CarouselArrow({
+  direction,
+  disabled,
+  onClick,
+}: {
+  direction: 'left' | 'right'
+  disabled: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={direction === 'left' ? 'Geri kaydır' : 'İleri kaydır'}
+      className={`p-2 rounded-full border transition-all duration-300 ${
+        disabled
+          ? 'border-brand-gold/10 text-brand-gold/20'
+          : 'border-brand-gold/30 text-brand-gold hover:bg-brand-gold/15 hover:border-brand-gold/70'
+      }`}
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d={direction === 'left' ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'}
+        />
+      </svg>
+    </button>
   )
 }

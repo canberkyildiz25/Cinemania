@@ -1,149 +1,356 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Bodoni Moda — didone display, klasik sinema afişi
+   Schibsted Grotesk — gövde metni, sıcak grotesk
+   Martian Mono — teknik etiketler, metadata */
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;0,6..96,700;0,6..96,800;1,6..96,400;1,6..96,600&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Martian+Mono:wght@300;400;500;600&display=swap');
 
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    color-scheme: dark;
-  }
+/* ── Design tokens (Tailwind v4 okur) ───────────────────────── */
+@theme {
+  --color-brand-burgundy: #8B1538;
+  --color-brand-burgundy-deep: #5C0E24;
+  --color-brand-burgundy-lit: #B31D4A;
+  --color-brand-gold: #D4AF37;
+  --color-brand-gold-lit: #F0D264;
+  --color-brand-gold-deep: #9A7B1F;
+  --color-brand-cream: #E8DCC8;
+  --color-brand-dark: #0A0E27;
+
+  --color-surface-primary: #070A1C;
+  --color-surface-secondary: #0F1328;
+  --color-surface-tertiary: #191E3C;
+  --color-surface-elevated: #232949;
+
+  --font-display: "Bodoni Moda", "Times New Roman", serif;
+  --font-body: "Schibsted Grotesk", system-ui, sans-serif;
+  --font-mono: "Martian Mono", ui-monospace, monospace;
+
+  --animate-reel-spin: reel-spin 2s linear infinite;
+  --animate-spotlight: spotlight-pulse 4s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-rise: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  --ease-cinema: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+@keyframes reel-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spotlight-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(212, 175, 55, 0.25); }
+  50%      { box-shadow: 0 0 56px rgba(212, 175, 55, 0.55); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-4%, -4%); }
+  30% { transform: translate(2%, -6%); }
+  50% { transform: translate(-3%, 5%); }
+  70% { transform: translate(4%, 2%); }
+  90% { transform: translate(-2%, 3%); }
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
 @layer base {
-  * {
-    scroll-behavior: smooth;
-  }
+  :root { color-scheme: dark; }
+
+  * { scroll-behavior: smooth; }
 
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    background-color: #0A0E27;
+    background-color: #070A1C;
     color: #E8DCC8;
-    font-family: 'Space Grotesk', sans-serif;
-    line-height: 1.5;
+    font-family: var(--font-body);
+    line-height: 1.6;
+    /* iki katmanlı ambiyans: bordo ve altın ışık sızıntısı */
+    background-image:
+      radial-gradient(ellipse 80% 50% at 15% 0%,  rgba(139, 21, 56, 0.22), transparent 60%),
+      radial-gradient(ellipse 60% 45% at 95% 8%,  rgba(212, 175, 55, 0.10), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* film grain — tüm sayfanın üstünde, tıklamayı engellemez */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.032;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 8s steps(6) infinite;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Syne', sans-serif;
-    font-weight: bold;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
   }
 
-  h1 { font-size: 2.25rem; line-height: 2.5rem; }
-  h2 { font-size: 1.875rem; line-height: 2.25rem; }
-  h3 { font-size: 1.5rem; line-height: 2rem; }
+  h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); }
+  h2 { font-size: clamp(1.9rem, 3.6vw, 2.75rem); }
+  h3 { font-size: clamp(1.35rem, 2vw, 1.75rem); }
 
-  code, pre {
-    font-family: 'JetBrains Mono', monospace;
+  code, pre { font-family: var(--font-mono); }
+
+  /* tıklanabilir her şey parmak imleci alsın — tek tek class eklemeye gerek yok */
+  button:not(:disabled),
+  a[href],
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled { cursor: not-allowed; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-gold);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: rgba(212, 175, 55, 0.3);
+    color: #FFF8E7;
   }
 }
 
+/* ── Components ─────────────────────────────────────────────── */
 @layer components {
   .btn-primary {
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #D4AF37 0%, #E8DCC8 100%);
-    color: #0A0E27;
+    position: relative;
+    padding: 0.85rem 1.75rem;
+    background: linear-gradient(135deg, #D4AF37 0%, #F0D264 50%, #D4AF37 100%);
+    background-size: 200% 100%;
+    color: #070A1C;
+    font-family: var(--font-body);
     font-weight: 700;
-    font-size: 0.95rem;
-    letter-spacing: 0.5px;
-    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    border-radius: 0.4rem;
     border: none;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+    overflow: hidden;
+    transition: all 0.45s var(--ease-cinema);
+    box-shadow: 0 4px 18px rgba(212, 175, 55, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.4);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
   }
 
-  .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 25px rgba(212, 175, 55, 0.4);
-    background: linear-gradient(135deg, #E8DCC8 0%, #D4AF37 100%);
+  /* altın parıltı süpürmesi */
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.65) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 0.75s var(--ease-cinema);
   }
 
-  .btn-primary:active {
-    transform: translateY(-1px);
+  .btn-primary:hover::before { transform: translateX(120%); }
+
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    background-position: 100% 0;
+    box-shadow: 0 14px 32px rgba(212, 175, 55, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .btn-primary:active { transform: translateY(-1px) scale(0.99); }
+
+  .btn-primary:disabled {
+    opacity: 0.45;
+    filter: grayscale(0.6);
+    box-shadow: none;
+    transform: none;
   }
 
   .btn-secondary {
-    padding: 0.75rem 1.5rem;
-    border: 2px solid #D4AF37;
+    position: relative;
+    padding: 0.85rem 1.75rem;
+    border: 1.5px solid rgba(212, 175, 55, 0.55);
     color: #D4AF37;
-    background-color: transparent;
+    background: rgba(212, 175, 55, 0.04);
+    backdrop-filter: blur(8px);
+    font-family: var(--font-body);
     font-weight: 600;
-    font-size: 0.95rem;
-    border-radius: 0.375rem;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
-    cursor: pointer;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    border-radius: 0.4rem;
+    transition: all 0.4s var(--ease-cinema);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
   }
 
   .btn-secondary:hover {
-    background-color: rgba(212, 175, 55, 0.15);
-    border-color: #E8DCC8;
-    color: #E8DCC8;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2);
+    background: rgba(212, 175, 55, 0.14);
+    border-color: #D4AF37;
+    color: #F0D264;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(212, 175, 55, 0.22);
   }
 
-  .btn-secondary:active {
-    transform: translateY(0);
-  }
+  .btn-secondary:active { transform: translateY(-1px); }
 
   .btn-ghost {
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.25rem;
     color: #E8DCC8;
-    background-color: transparent;
+    background: transparent;
     border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s var(--ease-cinema);
     font-weight: 500;
   }
 
-  .btn-ghost:hover {
-    color: #D4AF37;
-    transform: translateX(2px);
-  }
+  .btn-ghost:hover { color: #D4AF37; transform: translateX(3px); }
 
   .card {
-    border-radius: 0.25rem;
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    background-color: #12151C;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(212, 175, 55, 0.16);
+    background: linear-gradient(160deg, #0F1328 0%, #070A1C 100%);
     overflow: hidden;
-    transition: all 0.3s;
+    transition: all 0.5s var(--ease-cinema);
   }
 
   .card:hover {
-    border-color: rgba(212, 175, 55, 0.6);
-    box-shadow: 0 10px 15px -3px rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.55);
+    box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(212, 175, 55, 0.12),
+                0 0 34px -8px rgba(212, 175, 55, 0.35);
+    transform: translateY(-6px);
   }
 
   .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: #D4AF37;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  /* eyebrow'un yanındaki ince altın çizgi */
+  .eyebrow::after {
+    content: "";
+    width: 3rem;
+    height: 1px;
+    background: linear-gradient(90deg, #D4AF37, transparent);
   }
 
   .glass {
-    backdrop-filter: blur(12px);
-    background-color: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px) saturate(1.4);
+    background: rgba(7, 10, 28, 0.72);
+    border: 1px solid rgba(212, 175, 55, 0.14);
+  }
+
+  /* bölüm başlıklarının altındaki altın aksan */
+  .rule-gold {
+    position: relative;
+    padding-left: 1rem;
+  }
+
+  .rule-gold::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.15em;
+    bottom: 0.15em;
+    width: 3px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #F0D264, #8B1538);
+  }
+
+  /* poster çerçevesi — hover'da altın hale */
+  .poster-frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    transition: all 0.55s var(--ease-cinema);
+  }
+
+  .poster-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(7, 10, 28, 0.9) 100%);
+    opacity: 0.85;
+    transition: opacity 0.45s ease;
+    pointer-events: none;
+  }
+
+  .poster-frame:hover {
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 40px -10px rgba(212, 175, 55, 0.45);
+  }
+
+  .poster-frame:hover::after { opacity: 0.55; }
+
+  /* platform rozeti */
+  .provider-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.45rem;
+    background: linear-gradient(140deg, rgba(212, 175, 55, 0.16), rgba(139, 21, 56, 0.16));
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    color: #E8DCC8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.35s var(--ease-cinema);
+  }
+
+  .provider-chip:hover {
+    background: linear-gradient(140deg, rgba(212, 175, 55, 0.3), rgba(139, 21, 56, 0.26));
+    border-color: #D4AF37;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px -6px rgba(212, 175, 55, 0.4);
   }
 }
 
+/* ── Utilities ──────────────────────────────────────────────── */
 @layer utilities {
   .text-gradient-gold {
-    background: linear-gradient(to right, #D4AF37, #E8DCC8);
+    background: linear-gradient(100deg, #D4AF37 0%, #F0D264 40%, #E8DCC8 60%, #D4AF37 100%);
+    background-size: 200% auto;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: shimmer 6s linear infinite;
+  }
+
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 
   .line-clamp-2 {
@@ -153,30 +360,55 @@
     -webkit-box-orient: vertical;
   }
 
-  .animation-delay-100 {
-    animation-delay: 100ms;
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
   }
 
-  .animation-delay-200 {
-    animation-delay: 200ms;
+  /* kenarları karartan sinema vinyeti */
+  .vignette::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(7, 10, 28, 0.75) 100%);
   }
+
+  .glow-gold { box-shadow: 0 0 40px -10px rgba(212, 175, 55, 0.5); }
+  .glow-burgundy { box-shadow: 0 0 44px -10px rgba(139, 21, 56, 0.7); }
+
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { scrollbar-width: none; }
+
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
 
-::-webkit-scrollbar-track {
-  background: rgba(10, 14, 39, 0.5);
-}
+::-webkit-scrollbar-track { background: #070A1C; }
 
 ::-webkit-scrollbar-thumb {
-  background: #D4AF37;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #D4AF37, #8B1538);
+  border-radius: 6px;
+  border: 2px solid #070A1C;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #E8DCC8;
+  background: linear-gradient(180deg, #F0D264, #B31D4A);
+}
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  body::after { animation: none; }
 }

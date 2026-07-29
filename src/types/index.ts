@@ -9,6 +9,7 @@ export interface Movie {
   voteAverage: number
   voteCount: number
   genreIds?: number[]
+  genres?: Genre[]
   popularity?: number
   runtime?: number
   budget?: number
@@ -20,8 +21,6 @@ export interface Movie {
     cast: Cast[]
     crew: Crew[]
   }
-  streamUrl?: string
-  archiveId?: string
 }
 
 export interface Cast {
