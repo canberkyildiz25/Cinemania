@@ -60,12 +60,18 @@ const transformMovie = (tmdbMovie: TMDBMovie): Movie => ({
 })
 
 export const tmdbService = {
-  // Trending
+  // Quality Movies (Trending with filters)
   async getTrendingMovies(page = 1): Promise<PaginatedResponse<Movie>> {
     const response = await apiClient.get<PaginatedResponse<TMDBMovie>>(
-      '/trending/movie/week',
+      '/discover/movie',
       {
-        params: { page },
+        params: {
+          page,
+          sort_by: 'popularity.desc',
+          vote_count_gte: 500,
+          vote_average_gte: 6.5,
+          language: 'en',
+        },
       }
     )
     return {
