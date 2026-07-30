@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { tmdbService } from '../services/tmdbService'
 import { MovieCard } from '../components/features/movies/MovieCard'
@@ -14,7 +14,8 @@ const SORT_OPTIONS = [
 
 export function Search() {
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '')
   const [movies, setMovies] = useState<Movie[]>([])
   const [genres, setGenres] = useState<Genre[]>([])
   const [selectedGenres, setSelectedGenres] = useState<number[]>([])
@@ -30,6 +31,13 @@ export function Search() {
       .then(setGenres)
       .catch((err) => console.error('Failed to fetch genres:', err))
   }, [])
+
+  // header'dan ya da paylaşılan bağlantıdan gelen ?q= aramayı doldursun
+  useEffect(() => {
+    const fromUrl = searchParams.get('q') ?? ''
+    setSearchQuery((current) => (current === fromUrl ? current : fromUrl))
+    setCurrentPage(1)
+  }, [searchParams])
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -107,8 +115,11 @@ export function Search() {
             placeholder="Film adı yaz…"
             value={searchQuery}
             onChange={(e) => {
-              setSearchQuery(e.target.value)
+              const value = e.target.value
+              setSearchQuery(value)
               setCurrentPage(1)
+              // adres çubuğu aramayı yansıtsın ki bağlantı paylaşılabilsin
+              setSearchParams(value.trim() ? { q: value } : {}, { replace: true })
             }}
             className="w-full pl-14 pr-6 py-4 rounded-lg bg-surface-secondary/80 border border-brand-gold/25 text-brand-cream placeholder-brand-cream/35 transition-all duration-300 focus:border-brand-gold/70 focus:bg-surface-secondary focus:outline-none focus:shadow-[0_0_30px_-8px_rgba(212,175,55,0.4)]"
           />
