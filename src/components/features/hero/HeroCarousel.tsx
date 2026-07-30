@@ -77,7 +77,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
         )}
       </AnimatePresence>
 
-      <section className="relative w-full h-[85vh] md:h-[78vh] overflow-hidden">
+      <section className="relative w-full h-[85vh] md:h-[78vh] min-h-[600px] overflow-hidden">
         {/* Arka plan — tüm alan tıklanabilir, üstteki kontroller kendi tıklamalarını yutar */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -109,7 +109,8 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
 
         {/* İçerik — tıklama katmanının üstünde */}
         <div className="relative z-20 h-full flex items-end md:items-center pointer-events-none">
-          <div className="max-w-2xl px-6 md:px-14 pb-20 md:pb-0">
+          {/* alt boşluk slayt göstergelerine yer bırakır */}
+          <div className="max-w-2xl px-6 md:px-14 pb-28 md:pb-24">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentMovie.id}
@@ -173,8 +174,8 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
           </div>
         </div>
 
-        {/* Slayt göstergeleri */}
-        <div className="absolute bottom-8 left-6 md:left-14 z-30 flex items-center gap-3">
+        {/* Slayt göstergeleri — aksiyon butonlarıyla çakışmasın diye sağ altta */}
+        <div className="absolute bottom-7 right-6 md:right-14 z-30 flex items-center gap-3">
           {movies.map((movie, index) => (
             <button
               key={movie.id}
