@@ -32,11 +32,13 @@ Node 22, and a TMDB API key. A key is free: make an account at themoviedb.org an
 npm install
 ```
 
-Put the key in a file called `.env` at the root:
+Copy `.env.example` to `.env` and put the key in it:
 
 ```
 VITE_TMDB_API_KEY=your_key_here
 ```
+
+`.env` is not committed.
 
 ```bash
 npm run dev        # the address Vite prints, usually http://localhost:5173
@@ -69,9 +71,9 @@ public/_redirects, netlify.toml send every path to index.html, so a deep link lo
 
 ## Deploying
 
-The live site is on Netlify, built from this repository with `npm run build` and published from `dist`. `netlify.toml` sets the Node version and the single-page fallback.
+The live site is on Netlify: `npm run build`, then the `dist` folder is uploaded. `netlify.toml` sets the Node version and the single-page fallback.
 
-`.github/workflows/deploy.yml` also builds the site and publishes it to the `gh-pages` branch on every push to `main`.
+`.github/workflows/deploy.yml` also builds the site and publishes it to the `gh-pages` branch on every push to `main`. That build reads the key from a repository secret called `VITE_TMDB_API_KEY`.
 
 ## Notes
 

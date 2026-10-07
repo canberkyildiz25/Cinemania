@@ -20,6 +20,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        # the key is a repository secret; without it the build has no film data
+        env:
+          VITE_TMDB_API_KEY: ${{ secrets.VITE_TMDB_API_KEY }}
         run: npm run build
 
       - name: Deploy to gh-pages
